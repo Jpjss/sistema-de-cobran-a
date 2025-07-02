@@ -32,8 +32,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (credentials: LoginCredentials): Promise<boolean> => {
     try {
-      const result = await authService.login(credentials)
-      if (result) {
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(credentials),
+      })
+      if (!response.ok) {
+        return false
+      }
+      const result = await response.json()
+      if (result && result.user && result.token) {
         setUser(result.user)
         localStorage.setItem("auth-token", result.token)
         return true

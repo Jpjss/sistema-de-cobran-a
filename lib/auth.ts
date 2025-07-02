@@ -14,6 +14,10 @@ export interface User {
   isActive: boolean
 }
 
+
+// Exporta função login diretamente para uso na API
+export const login = (...args: Parameters<typeof authService.login>) => authService.login(...args);
+
 export interface AuthUser {
   id: string
   name: string
@@ -75,15 +79,20 @@ const users: User[] = [
 
 export const authService = {
   async login(credentials: LoginCredentials): Promise<{ user: AuthUser; token: string } | null> {
-    const user = users.find((u) => u.email === credentials.email && u.isActive)
+    console.log('Tentativa de login:', credentials);
+    const email = credentials.email.trim().toLowerCase();
+    const user = users.find((u) => u.email === email && u.isActive)
 
     if (!user) {
+      console.log('Usuário não encontrado:', email);
       return null
     }
 
-    const isValidPassword = await bcrypt.compare(credentials.password, user.password)
+    const password = credentials.password.trim();
+    const isValidPassword = await bcrypt.compare(password, user.password)
 
     if (!isValidPassword) {
+      console.log('Senha inválida para o usuário:', email);
       return null
     }
 
