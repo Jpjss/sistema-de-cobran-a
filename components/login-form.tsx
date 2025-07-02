@@ -27,9 +27,9 @@ export function LoginForm() {
     setLoading(true)
 
     try {
-      const success = await login(formData)
-      if (!success) {
-        setError("Email ou senha inválidos")
+      const result = await login(formData)
+      if (result !== true) {
+        setError(result)
       }
     } catch (error) {
       setError("Erro ao fazer login. Tente novamente.")

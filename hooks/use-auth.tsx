@@ -5,7 +5,7 @@ import { authService, type AuthUser, type LoginCredentials } from "@/lib/auth"
 
 interface AuthContextType {
   user: AuthUser | null
-  login: (credentials: LoginCredentials) => Promise<boolean>
+  login: (credentials: LoginCredentials) => Promise<string | true>
   logout: () => void
   loading: boolean
 }
@@ -30,26 +30,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false)
   }, [])
 
-  const login = async (credentials: LoginCredentials): Promise<boolean> => {
+  const login = async (credentials: LoginCredentials): Promise<string | true> => {
     try {
       const response = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(credentials),
       })
-      if (!response.ok) {
-        return false
-      }
       const result = await response.json()
+      if (!response.ok) {
+        return result.error || "Erro ao fazer login. Tente novamente."
+      }
       if (result && result.user && result.token) {
         setUser(result.user)
         localStorage.setItem("auth-token", result.token)
         return true
       }
-      return false
+      return "Erro ao fazer login. Tente novamente."
     } catch (error) {
       console.error("Login error:", error)
-      return false
+      return "Erro ao fazer login. Tente novamente."
     }
   }
 

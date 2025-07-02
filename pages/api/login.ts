@@ -10,7 +10,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const result = await login({ email, password });
-    // result deve conter token e/ou dados do usuário
+    if (!result) {
+      // Verifica se o usuário existe
+      const userExists = email && email.trim &&
+        (require('@/lib/auth').authService.getAllUsers().some((u: any) => u.email === email.trim().toLowerCase()));
+      if (!userExists) {
+        return res.status(401).json({ error: 'Usuário não encontrado' });
+      } else {
+        return res.status(401).json({ error: 'Senha inválida' });
+      }
+    }
     return res.status(200).json(result);
   } catch (error: any) {
     // Log para depuração
