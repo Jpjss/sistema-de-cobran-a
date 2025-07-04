@@ -20,12 +20,19 @@ export function UserManagement() {
   const [users, setUsers] = useState<Omit<User, "password">[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingUser, setEditingUser] = useState<Omit<User, "password"> | null>(null)
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     role: "suporte" as "admin" | "financeiro" | "suporte",
     isActive: true,
   })
+
+  // Estado para feedback visual do botão de status
+  const [loadingUserId, setLoadingUserId] = useState<string | null>(null)
+
+  // Feedback visual para loading do botão de status
+  // Removido duplicata: já existe no topo do componente
 
   useEffect(() => {
     loadUsers()
@@ -130,6 +137,8 @@ export function UserManagement() {
 
     return <Badge variant={variants[role as keyof typeof variants]}>{labels[role as keyof typeof labels]}</Badge>
   }
+
+
 
   return (
     <div className="space-y-6">
@@ -260,9 +269,47 @@ export function UserManagement() {
                   </div>
                   <div className="flex items-center gap-2">
                     {getRoleBadge(user.role)}
-                    <Badge variant={user.isActive ? "default" : "secondary"}>
-                      {user.isActive ? "Ativo" : "Inativo"}
-                    </Badge>
+                    <Button
+                      size="sm"
+                      style={{
+                        backgroundColor: user.isActive ? '#22c55e' : '#ef4444',
+                        color: 'white',
+                        fontWeight: 600,
+                        borderRadius: '9999px',
+                        padding: '0.25rem 0.75rem',
+                        fontSize: '0.75rem',
+                        transition: 'background 0.2s',
+                        opacity: !user.isActive ? 0.6 : (loadingUserId === user.id ? 0.7 : 1),
+                        cursor: currentUser?.role === 'admin' ? (loadingUserId === user.id ? 'not-allowed' : 'pointer') : 'default',
+                      }}
+                      disabled={currentUser?.role !== 'admin' || loadingUserId === user.id}
+                      title={
+                        currentUser?.role !== 'admin'
+                          ? 'Apenas administradores podem alterar o status'
+                          : user.isActive
+                            ? 'Clique para desativar'
+                            : 'Clique para ativar'
+                      }
+                      onClick={async () => {
+                        if (currentUser?.role !== 'admin') return;
+                        setLoadingUserId(user.id)
+                        const res = await fetch(`/api/users/${user.id}/toggle-active`, { method: 'PATCH' })
+                        if (res.ok) {
+                          setTimeout(() => {
+                            loadUsers()
+                            setLoadingUserId(null)
+                          }, 200)
+                        } else {
+                          setLoadingUserId(null)
+                        }
+                      }}
+                    >
+                      {loadingUserId === user.id
+                        ? '...'
+                        : user.isActive
+                          ? (<><span style={{verticalAlign:'middle'}}>✔️</span> Ativo</>)
+                          : (<><span style={{verticalAlign:'middle'}}>🔒</span> Inativo</>)}
+                    </Button>
                   </div>
                 </div>
                 <DropdownMenu>
