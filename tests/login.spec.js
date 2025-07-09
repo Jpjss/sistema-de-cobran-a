@@ -1,13 +1,13 @@
 const { test, expect } = require('@playwright/test');
 
-test.describe('Sistema de Cobrança - Testes de Login', () => {
+test.describe('FynApp - Testes de Login', () => {
   
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
   });
 
   test('deve carregar a página de login', async ({ page }) => {
-    await expect(page).toHaveTitle(/login|entrar|sistema/i);
+    await expect(page).toHaveTitle(/login|entrar|fynapp/i);
     
     // Verifica se os elementos de login estão presentes
     await expect(page.locator('input[type="email"], input[name*="email"], input[name*="usuario"]')).toBeVisible();

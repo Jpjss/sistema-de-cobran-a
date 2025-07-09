@@ -18,7 +18,7 @@ export function EmailSettings() {
     smtpUser: "",
     smtpPassword: "",
     fromEmail: "",
-    fromName: "Sistema de Cobrança",
+    fromName: "FynApp",
   })
 
   const [connectionStatus, setConnectionStatus] = useState<"idle" | "testing" | "success" | "error">("idle")
@@ -200,7 +200,7 @@ export function EmailSettings() {
                 id="fromName"
                 value={config.fromName}
                 onChange={(e) => setConfig((prev) => ({ ...prev, fromName: e.target.value }))}
-                placeholder="Sistema de Cobrança"
+                placeholder="FynApp"
                 className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
               />
             </div>

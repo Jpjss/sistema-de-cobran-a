@@ -24,7 +24,7 @@ export class EmailService {
     this.config = config
 
     // Configurar transporter do Nodemailer
-    this.transporter = nodemailer.createTransporter({
+    this.transporter = nodemailer.createTransport({
       host: config.smtpHost,
       port: config.smtpPort,
       secure: config.smtpSecure, // true para 465, false para outras portas
@@ -196,7 +196,7 @@ Guarde este e-mail como comprovante do seu pagamento.`,
   async sendTestEmail(to: string): Promise<boolean> {
     const template: EmailTemplate = {
       subject: "🧪 Teste do Sistema de Notificações",
-      body: `Este é um e-mail de teste do Sistema de Cobrança.
+      body: `Este é um e-mail de teste do FynApp.
 
 Se você recebeu este e-mail, significa que a configuração SMTP está funcionando corretamente!
 
@@ -207,7 +207,7 @@ Se você recebeu este e-mail, significa que a configuração SMTP está funciona
 Data/Hora do teste: {{testDate}}
 
 Atenciosamente,
-Sistema de Cobrança`,
+FynApp`,
       variables: {
         testDate: new Date().toLocaleString("pt-BR"),
       },
@@ -225,5 +225,5 @@ export const emailService = new EmailService({
   smtpUser: process.env.SMTP_USER || "",
   smtpPassword: process.env.SMTP_PASSWORD || "",
   fromEmail: process.env.FROM_EMAIL || "noreply@seudominio.com",
-  fromName: process.env.FROM_NAME || "Sistema de Cobrança",
+  fromName: process.env.FROM_NAME || "FynApp",
 })

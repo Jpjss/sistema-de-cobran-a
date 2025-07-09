@@ -8,8 +8,8 @@ import { AuthProvider } from "@/hooks/use-auth"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Sistema de Cobrança",
-  description: "Sistema completo de gerenciamento de cobranças e clientes",
+  title: "FynApp",
+  description: "FynApp - Sistema completo de gerenciamento de cobranças e clientes",
   generator: "v0.dev"
 }
 
