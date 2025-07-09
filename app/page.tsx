@@ -225,12 +225,12 @@ export default function BillingSystem() {
     <div className="min-h-screen bg-background p-4">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-3">
-              <img src="/logo.FynApp.png" alt="Logo FynApp" style={{ width: 40, height: 40 }} />
-              <h1 className="text-3xl font-bold text-foreground">FynApp</h1>
-            </div>
-            <p className="text-muted-foreground mt-2">Gerencie suas cobranças e clientes de forma eficiente com o FynApp</p>
+          <div className="flex items-center gap-3">
+            <img src="/logo.FynApp.png" alt="Logo FynApp" style={{ width: 64, height: 64 }} />
+          </div>
+          <div className="flex-1 flex flex-col items-center">
+            <h1 className="text-3xl font-bold text-foreground">FynApp</h1>
+            <p className="text-muted-foreground mt-2 text-center">Gerencie suas cobranças e clientes de forma eficiente com o FynApp</p>
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
