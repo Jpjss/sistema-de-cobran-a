@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Plus, DollarSign, Users, FileText, TrendingUp, Bell, Settings, Shield } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -75,32 +75,35 @@ export default function BillingSystem() {
     },
   ])
 
-  const [customers, setCustomers] = useState<Customer[]>([
-    {
-      id: "1",
-      name: "João Silva",
-      email: "joao@email.com",
-      phone: "(11) 99999-9999",
-      address: "Rua das Flores, 123 - São Paulo, SP",
-      createdAt: "2023-12-01",
-    },
-    {
-      id: "2",
-      name: "Maria Santos",
-      email: "maria@email.com",
-      phone: "(11) 88888-8888",
-      address: "Av. Paulista, 456 - São Paulo, SP",
-      createdAt: "2023-11-15",
-    },
-    {
-      id: "3",
-      name: "Pedro Costa",
-      email: "pedro@email.com",
-      phone: "(11) 77777-7777",
-      address: "Rua Augusta, 789 - São Paulo, SP",
-      createdAt: "2023-10-20",
-    },
-  ])
+  const [customers, setCustomers] = useState<Customer[]>([])
+  const [loadingCustomers, setLoadingCustomers] = useState(true)
+
+  // Carregar clientes do banco ao abrir a aba
+  useEffect(() => {
+    async function fetchCustomers() {
+      setLoadingCustomers(true)
+      try {
+        const res = await fetch("/api/clientes")
+        const data = await res.json()
+        // Adaptar para o formato esperado
+        setCustomers(
+          data.map((c: any) => ({
+            id: c._id || c.id,
+            name: c.nome || c.name,
+            email: c.email,
+            phone: c.phone || "",
+            address: c.address || "",
+            createdAt: c.createdAt || new Date().toISOString(),
+          }))
+        )
+      } catch (e) {
+        setCustomers([])
+      } finally {
+        setLoadingCustomers(false)
+      }
+    }
+    fetchCustomers()
+  }, [])
 
   const [showBillingForm, setShowBillingForm] = useState(false)
 
@@ -171,54 +174,78 @@ export default function BillingSystem() {
     }
   }
 
-  const addCustomer = (customer: Omit<Customer, "id" | "createdAt">) => {
-    const newCustomer: Customer = {
-      ...customer,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString().split("T")[0],
+  const addCustomer = async (customer: Omit<Customer, "id" | "createdAt">) => {
+    // Envia para o backend
+    try {
+      const res = await fetch("/api/clientes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nome: customer.name, email: customer.email }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        // Atualiza lista
+        const novoCliente = {
+          id: data.id,
+          name: customer.name,
+          email: customer.email,
+          phone: customer.phone || "",
+          address: customer.address || "",
+          createdAt: new Date().toISOString(),
+        }
+        setCustomers([novoCliente, ...customers])
+        auditService.log({
+          userId: user.id,
+          userName: user.name,
+          action: "CREATE",
+          resource: "CUSTOMER",
+          resourceId: data.id,
+          details: `Cadastrou novo cliente ${customer.name}`,
+        })
+      }
+    } catch (e) {
+      // erro silencioso
     }
-    setCustomers([newCustomer, ...customers])
-
-    auditService.log({
-      userId: user.id,
-      userName: user.name,
-      action: "CREATE",
-      resource: "CUSTOMER",
-      resourceId: newCustomer.id,
-      details: `Cadastrou novo cliente ${customer.name}`,
-    })
   }
 
-  const updateCustomer = (id: string, updates: Partial<Customer>) => {
+  const updateCustomer = async (id: string, updates: Partial<Customer>) => {
     const customer = customers.find((c) => c.id === id)
-    setCustomers(customers.map((customer) => (customer.id === id ? { ...customer, ...updates } : customer)))
-
-    if (customer) {
-      auditService.log({
-        userId: user.id,
-        userName: user.name,
-        action: "UPDATE",
-        resource: "CUSTOMER",
-        resourceId: id,
-        details: `Atualizou dados do cliente ${updates.name || customer.name}`,
+    try {
+      await fetch(`/api/clientes?id=${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
       })
-    }
+      setCustomers(customers.map((customer) => (customer.id === id ? { ...customer, ...updates } : customer)))
+      if (customer) {
+        auditService.log({
+          userId: user.id,
+          userName: user.name,
+          action: "UPDATE",
+          resource: "CUSTOMER",
+          resourceId: id,
+          details: `Atualizou dados do cliente ${updates.name || customer.name}`,
+        })
+      }
+    } catch (e) {}
   }
 
-  const deleteCustomer = (id: string) => {
+  const deleteCustomer = async (id: string) => {
     const customer = customers.find((c) => c.id === id)
-    setCustomers(customers.filter((customer) => customer.id !== id))
-
-    if (customer) {
-      auditService.log({
-        userId: user.id,
-        userName: user.name,
-        action: "DELETE",
-        resource: "CUSTOMER",
-        resourceId: id,
-        details: `Excluiu cliente ${customer.name}`,
-      })
-    }
+    try {
+      await fetch(`/api/clientes?id=${id}`, { method: "DELETE" })
+      setCustomers(customers.filter((customer) => customer.id !== id))
+      if (customer) {
+        auditService.log({
+          userId: user.id,
+          userName: user.name,
+          action: "DELETE",
+          resource: "CUSTOMER",
+          resourceId: id,
+          details: `Excluiu cliente ${customer.name}`,
+        })
+      }
+    } catch (e) {}
   }
 
   return (
@@ -312,12 +339,16 @@ export default function BillingSystem() {
 
           <TabsContent value="customers">
             <ProtectedRoute permission="canManageCustomers">
-              <CustomerList
-                customers={customers}
-                onAdd={addCustomer}
-                onUpdate={updateCustomer}
-                onDelete={deleteCustomer}
-              />
+          {loadingCustomers ? (
+            <div className="text-center py-8 text-muted-foreground">Carregando clientes...</div>
+          ) : (
+            <CustomerList
+              customers={customers}
+              onAdd={addCustomer}
+              onUpdate={updateCustomer}
+              onDelete={deleteCustomer}
+            />
+          )}
             </ProtectedRoute>
           </TabsContent>
 

@@ -31,5 +31,3 @@ export default async function handler(req, res) {
   res.status(200).json({ success, provider, to: customerEmail, error: errorMsg });
 }
 
-MONGODB_URI=mongodb://localhost:27017
-MONGODB_DB=sistema_cobranca
