@@ -217,13 +217,33 @@ FynApp`,
   }
 }
 
-// Instância global do serviço de e-mail com configuração do ambiente
-export const emailService = new EmailService({
-  smtpHost: process.env.SMTP_HOST || "smtp.gmail.com",
-  smtpPort: Number.parseInt(process.env.SMTP_PORT || "587"),
-  smtpSecure: process.env.SMTP_SECURE === "true", // true para porta 465
-  smtpUser: process.env.SMTP_USER || "",
-  smtpPassword: process.env.SMTP_PASSWORD || "",
-  fromEmail: process.env.FROM_EMAIL || "noreply@seudominio.com",
-  fromName: process.env.FROM_NAME || "FynApp",
-})
+
+// Função para obter configuração de provedor
+export function getEmailConfig(provider: "gmail" | "outlook"): EmailConfig {
+  if (provider === "gmail") {
+    return {
+      smtpHost: process.env.GMAIL_SMTP_HOST || "",
+      smtpPort: Number(process.env.GMAIL_SMTP_PORT || 587),
+      smtpSecure: process.env.GMAIL_SMTP_SECURE === "true",
+      smtpUser: process.env.GMAIL_SMTP_USER || "",
+      smtpPassword: process.env.GMAIL_SMTP_PASSWORD || "",
+      fromEmail: process.env.GMAIL_FROM_EMAIL || "",
+      fromName: process.env.GMAIL_FROM_NAME || "FynApp",
+    }
+  }
+  if (provider === "outlook") {
+    return {
+      smtpHost: process.env.OUTLOOK_SMTP_HOST || "",
+      smtpPort: Number(process.env.OUTLOOK_SMTP_PORT || 587),
+      smtpSecure: process.env.OUTLOOK_SMTP_SECURE === "true",
+      smtpUser: process.env.OUTLOOK_SMTP_USER || "",
+      smtpPassword: process.env.OUTLOOK_SMTP_PASSWORD || "",
+      fromEmail: process.env.OUTLOOK_FROM_EMAIL || "",
+      fromName: process.env.OUTLOOK_FROM_NAME || "FynApp",
+    }
+  }
+  throw new Error("Provedor não suportado")
+}
+
+// Instância padrão (Gmail)
+export const emailService = new EmailService(getEmailConfig("gmail"));

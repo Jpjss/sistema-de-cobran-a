@@ -71,7 +71,7 @@ const users: User[] = [
     name: "Conta Suporte",
     email: "jp0886230@gmail.com",
     password: "$2b$10$mw3aekRlbOrDqyiqXVF.CuEfizHq8Fnx47QyhVvJ9KhBzKtL8Im7a", // jp22032006
-    role: "suporte",
+    role: "admin", // Alterado para admin para acesso total
     createdAt: "2025-06-29",
     isActive: true,
   },

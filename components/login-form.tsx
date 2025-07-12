@@ -42,7 +42,6 @@ export function LoginForm() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="flex flex-col items-start">
-          <img src="/logo.FynApp.png" alt="Logo FynApp" style={{ width: 120, height: 120, marginBottom: 12 }} />
           <div className="w-full text-center">
             <CardTitle className="text-2xl font-bold">FynApp</CardTitle>
             <CardDescription>Faça login para acessar o FynApp</CardDescription>
