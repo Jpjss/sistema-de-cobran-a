@@ -1,4 +1,5 @@
 {
   // Outras configurações podem estar aqui
-  "css.lint.unknownAtRules": "ignore"
+  "css.lint.unknownAtRules": "ignore",
+  "npm.packageManager": "npm"
 }

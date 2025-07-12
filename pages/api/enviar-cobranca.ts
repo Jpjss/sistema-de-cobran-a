@@ -6,8 +6,8 @@ export default async function handler(req, res) {
   const emailService = new EmailService(getEmailConfig(provider));
 
   // Dados fixos do cliente para teste
-  const customerEmail = 'gustavog.moraes@outlook.com';
-  const customerName = 'Gustavo Moraes';
+  const customerEmail = 'fernadaalvesdasilva@gmail.com';
+  const customerName = 'Fernanda Alves da Silva';
   const billing = {
     description: `Cobrança automática (${provider})`,
     amount: 199.99,

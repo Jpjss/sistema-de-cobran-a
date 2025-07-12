@@ -105,6 +105,35 @@ export default function BillingSystem() {
     fetchCustomers()
   }, [])
 
+  // Carregar cobranças do banco ao inicializar
+  useEffect(() => {
+    const fetchBillings = async () => {
+      try {
+        const response = await fetch('/api/cobrancas')
+        if (response.ok) {
+          const data = await response.json()
+          // Converter os dados do MongoDB para o formato do frontend
+          const formattedBillings = data.map((cobranca: any) => ({
+            id: cobranca._id,
+            customerName: cobranca.clienteId, // temporário, pode ser melhorado
+            customerEmail: cobranca.clienteId,
+            description: cobranca.descricao,
+            amount: cobranca.valor,
+            dueDate: cobranca.vencimento,
+            status: cobranca.status,
+            createdAt: new Date(cobranca.criadoEm).toISOString().split("T")[0],
+          }))
+          setBillings(formattedBillings)
+        } else {
+          console.error('Erro ao carregar cobranças')
+        }
+      } catch (error) {
+        console.error('Erro de conexão:', error)
+      }
+    }
+    fetchBillings()
+  }, [])
+
   const [showBillingForm, setShowBillingForm] = useState(false)
 
   if (loading) {
@@ -122,24 +151,47 @@ export default function BillingSystem() {
     return <LoginForm />
   }
 
-  const addBilling = (billing: Omit<Billing, "id" | "createdAt">) => {
-    const newBilling: Billing = {
-      ...billing,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString().split("T")[0],
-    }
-    setBillings([newBilling, ...billings])
-    setShowBillingForm(false)
+  const addBilling = async (billing: Omit<Billing, "id" | "createdAt">) => {
+    try {
+      const response = await fetch('/api/cobrancas', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          clienteId: billing.customerEmail, // usando email como identificador
+          descricao: billing.description,
+          valor: billing.amount,
+          vencimento: billing.dueDate,
+          status: billing.status,
+        }),
+      })
 
-    // Log da auditoria
-    auditService.log({
-      userId: user.id,
-      userName: user.name,
-      action: "CREATE",
-      resource: "BILLING",
-      resourceId: newBilling.id,
-      details: `Criou cobrança para ${billing.customerName} - ${billing.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`,
-    })
+      if (response.ok) {
+        const result = await response.json()
+        const newBilling: Billing = {
+          ...billing,
+          id: result.cobrancaId,
+          createdAt: new Date().toISOString().split("T")[0],
+        }
+        setBillings([newBilling, ...billings])
+        setShowBillingForm(false)
+
+        // Log da auditoria
+        auditService.log({
+          userId: user.id,
+          userName: user.name,
+          action: "CREATE",
+          resource: "BILLING",
+          resourceId: newBilling.id,
+          details: `Criou cobrança para ${billing.customerName} - ${billing.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`,
+        })
+      } else {
+        console.error('Erro ao salvar cobrança:', await response.text())
+      }
+    } catch (error) {
+      console.error('Erro de conexão:', error)
+    }
   }
 
   const updateBilling = (id: string, updates: Partial<Billing>) => {
