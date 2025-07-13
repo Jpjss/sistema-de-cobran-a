@@ -226,6 +226,46 @@ export default function BillingSystem() {
     }
   }
 
+  const sendEmailCobranca = async (billing: Billing) => {
+    try {
+      const response = await fetch('/api/enviar-email-cobranca', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          customerName: billing.customerName,
+          customerEmail: billing.customerEmail,
+          description: billing.description,
+          amount: billing.amount,
+          dueDate: billing.dueDate,
+          provider: 'gmail', // pode ser configurável
+        }),
+      })
+
+      const result = await response.json()
+      
+      if (result.success) {
+        alert('E-mail de cobrança enviado com sucesso!')
+        
+        // Log da auditoria
+        auditService.log({
+          userId: user.id,
+          userName: user.name,
+          action: "EMAIL_SENT",
+          resource: "BILLING",
+          resourceId: billing.id,
+          details: `Enviou e-mail de cobrança para ${billing.customerName}`,
+        })
+      } else {
+        alert(`Erro ao enviar e-mail: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('Erro ao enviar e-mail:', error)
+      alert('Erro de conexão ao enviar e-mail')
+    }
+  }
+
   const addCustomer = async (customer: Omit<Customer, "id" | "createdAt">) => {
     // Envia para o backend
     try {
@@ -385,7 +425,7 @@ export default function BillingSystem() {
                 </Card>
               )}
 
-              <BillingList billings={billings} onUpdate={updateBilling} onDelete={deleteBilling} />
+              <BillingList billings={billings} onUpdate={updateBilling} onDelete={deleteBilling} onSendEmail={sendEmailCobranca} />
             </ProtectedRoute>
           </TabsContent>
 

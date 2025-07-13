@@ -91,6 +91,12 @@ export class EmailService {
 
   // Enviar lembrete de vencimento
   async sendDueReminder(customerEmail: string, customerName: string, billing: any): Promise<boolean> {
+    console.log("📧 Iniciando envio de lembrete de vencimento para:", {
+      email: customerEmail,
+      nome: customerName,
+      cobranca: billing
+    })
+
     const template: EmailTemplate = {
       subject: "🔔 Lembrete: Cobrança vence em breve",
       body: `Olá {{customerName}},
@@ -119,7 +125,15 @@ Este é um e-mail automático. Em caso de dúvidas, entre em contato conosco.`,
       },
     }
 
-    return this.sendEmail(customerEmail, template)
+    console.log("📝 Template preparado:", {
+      subject: template.subject,
+      variables: template.variables
+    })
+
+    const result = await this.sendEmail(customerEmail, template)
+    console.log("📬 Resultado do envio:", result)
+    
+    return result
   }
 
   // Enviar aviso de atraso

@@ -13,6 +13,21 @@ export const metadata: Metadata = {
   generator: "v0.dev"
 }
 
+// Inicializar serviços automáticos no servidor
+if (typeof window === 'undefined') {
+  // Importar dinâmico para evitar problemas
+  setTimeout(async () => {
+    try {
+      console.log("🔧 Layout: Iniciando serviços automáticos...")
+      const autoInit = await import('@/lib/auto-init')
+      await autoInit.initializeAutomatedServices()
+      console.log("✅ Layout: Serviços iniciados com sucesso!")
+    } catch (error) {
+      console.error("❌ Layout: Erro ao iniciar serviços:", error)
+    }
+  }, 2000) // 2 segundos de delay
+}
+
 export default function RootLayout({
   children,
 }: {

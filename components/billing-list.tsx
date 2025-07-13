@@ -6,16 +6,17 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
-import { MoreHorizontal, Search, Check, X } from "lucide-react"
+import { MoreHorizontal, Search, Check, X, Mail } from "lucide-react"
 import type { Billing } from "@/app/page"
 
 interface BillingListProps {
   billings: Billing[]
   onUpdate: (id: string, updates: Partial<Billing>) => void
   onDelete: (id: string) => void
+  onSendEmail?: (billing: Billing) => void
 }
 
-export function BillingList({ billings, onUpdate, onDelete }: BillingListProps) {
+export function BillingList({ billings, onUpdate, onDelete, onSendEmail }: BillingListProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
 
@@ -93,6 +94,12 @@ export function BillingList({ billings, onUpdate, onDelete }: BillingListProps) 
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      {onSendEmail && (billing.status === "overdue" || billing.status === "pending") && (
+                        <DropdownMenuItem onClick={() => onSendEmail(billing)}>
+                          <Mail className="h-4 w-4 mr-2" />
+                          Enviar E-mail de Cobrança
+                        </DropdownMenuItem>
+                      )}
                       {billing.status === "pending" && (
                         <DropdownMenuItem onClick={() => onUpdate(billing.id, { status: "paid" })}>
                           <Check className="h-4 w-4 mr-2" />
