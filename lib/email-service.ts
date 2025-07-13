@@ -121,7 +121,7 @@ Este é um e-mail automático. Em caso de dúvidas, entre em contato conosco.`,
         customerName,
         description: billing.description,
         amount: billing.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
-        dueDate: new Date(billing.dueDate).toLocaleDateString("pt-BR"),
+        dueDate: billing.dueDate.includes('T') ? new Date(billing.dueDate).toLocaleDateString("pt-BR") : billing.dueDate.split('-').reverse().join('/'),
       },
     }
 
@@ -138,7 +138,10 @@ Este é um e-mail automático. Em caso de dúvidas, entre em contato conosco.`,
 
   // Enviar aviso de atraso
   async sendOverdueAlert(customerEmail: string, customerName: string, billing: any): Promise<boolean> {
-    const daysOverdue = Math.ceil((new Date().getTime() - new Date(billing.dueDate).getTime()) / (1000 * 3600 * 24))
+    // Calcula dias em atraso sem considerar horário
+    const today = new Date().toISOString().split('T')[0]
+    const dueDate = billing.dueDate.includes('T') ? billing.dueDate.split('T')[0] : billing.dueDate
+    const daysOverdue = Math.ceil((new Date(today).getTime() - new Date(dueDate).getTime()) / (1000 * 3600 * 24))
 
     const template: EmailTemplate = {
       subject: "🚨 URGENTE: Cobrança em atraso",
@@ -165,7 +168,7 @@ Este é um e-mail automático. Responda este e-mail ou entre em contato conosco 
         customerName,
         description: billing.description,
         amount: billing.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
-        dueDate: new Date(billing.dueDate).toLocaleDateString("pt-BR"),
+        dueDate: billing.dueDate.includes('T') ? new Date(billing.dueDate).toLocaleDateString("pt-BR") : billing.dueDate.split('-').reverse().join('/'),
         daysOverdue: daysOverdue.toString(),
       },
     }

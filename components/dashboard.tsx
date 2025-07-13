@@ -1,3 +1,4 @@
+import { formatDateBR } from "@/lib/date-utils"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { DollarSign, FileText, Users, AlertCircle, Calendar } from "lucide-react"
@@ -95,7 +96,7 @@ export function Dashboard({ billings, customers }: DashboardProps) {
                   <p className="font-medium dark:text-gray-200">{billing.customerName}</p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">{billing.description}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-500">
-                    Vencimento: {new Date(billing.dueDate).toLocaleDateString("pt-BR")}
+                    Vencimento: {formatDateBR(billing.dueDate)}
                   </p>
                 </div>
                 <div className="text-right space-y-1">

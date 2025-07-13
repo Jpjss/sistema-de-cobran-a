@@ -18,6 +18,7 @@ import { LoginForm } from "@/components/login-form"
 import { UserProfile } from "@/components/user-profile"
 import { ProtectedRoute } from "@/components/protected-route"
 import { useAuth } from "@/hooks/use-auth"
+import { useBillings } from "@/hooks/use-billings"
 import { auditService } from "@/lib/audit"
 
 export interface Billing {
@@ -42,41 +43,10 @@ export interface Customer {
 
 export default function BillingSystem() {
   const { user, loading } = useAuth()
-  const [billings, setBillings] = useState<Billing[]>([
-    {
-      id: "1",
-      customerName: "João Silva",
-      customerEmail: "joao@email.com",
-      description: "Desenvolvimento de website",
-      amount: 2500.0,
-      dueDate: "2024-01-15",
-      status: "pending",
-      createdAt: "2024-01-01",
-    },
-    {
-      id: "2",
-      customerName: "Maria Santos",
-      customerEmail: "maria@email.com",
-      description: "Consultoria em marketing digital",
-      amount: 1800.0,
-      dueDate: "2024-01-10",
-      status: "paid",
-      createdAt: "2023-12-28",
-    },
-    {
-      id: "3",
-      customerName: "Pedro Costa",
-      customerEmail: "pedro@email.com",
-      description: "Manutenção de sistema",
-      amount: 800.0,
-      dueDate: "2023-12-30",
-      status: "overdue",
-      createdAt: "2023-12-15",
-    },
-  ])
-
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loadingCustomers, setLoadingCustomers] = useState(true)
+  const [showBillingForm, setShowBillingForm] = useState(false)
+  const { billings, loadingBillings, addBilling: addBillingToDb, updateBilling: updateBillingInDb, deleteBilling: deleteBillingFromDb } = useBillings(user)
 
   // Carregar clientes do banco ao abrir a aba
   useEffect(() => {
@@ -105,37 +75,6 @@ export default function BillingSystem() {
     fetchCustomers()
   }, [])
 
-  // Carregar cobranças do banco ao inicializar
-  useEffect(() => {
-    const fetchBillings = async () => {
-      try {
-        const response = await fetch('/api/cobrancas')
-        if (response.ok) {
-          const data = await response.json()
-          // Converter os dados do MongoDB para o formato do frontend
-          const formattedBillings = data.map((cobranca: any) => ({
-            id: cobranca._id,
-            customerName: cobranca.clienteId, // temporário, pode ser melhorado
-            customerEmail: cobranca.clienteId,
-            description: cobranca.descricao,
-            amount: cobranca.valor,
-            dueDate: cobranca.vencimento,
-            status: cobranca.status,
-            createdAt: new Date(cobranca.criadoEm).toISOString().split("T")[0],
-          }))
-          setBillings(formattedBillings)
-        } else {
-          console.error('Erro ao carregar cobranças')
-        }
-      } catch (error) {
-        console.error('Erro de conexão:', error)
-      }
-    }
-    fetchBillings()
-  }, [])
-
-  const [showBillingForm, setShowBillingForm] = useState(false)
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -151,78 +90,9 @@ export default function BillingSystem() {
     return <LoginForm />
   }
 
-  const addBilling = async (billing: Omit<Billing, "id" | "createdAt">) => {
-    try {
-      const response = await fetch('/api/cobrancas', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          clienteId: billing.customerEmail, // usando email como identificador
-          descricao: billing.description,
-          valor: billing.amount,
-          vencimento: billing.dueDate,
-          status: billing.status,
-        }),
-      })
-
-      if (response.ok) {
-        const result = await response.json()
-        const newBilling: Billing = {
-          ...billing,
-          id: result.cobrancaId,
-          createdAt: new Date().toISOString().split("T")[0],
-        }
-        setBillings([newBilling, ...billings])
-        setShowBillingForm(false)
-
-        // Log da auditoria
-        auditService.log({
-          userId: user.id,
-          userName: user.name,
-          action: "CREATE",
-          resource: "BILLING",
-          resourceId: newBilling.id,
-          details: `Criou cobrança para ${billing.customerName} - ${billing.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`,
-        })
-      } else {
-        console.error('Erro ao salvar cobrança:', await response.text())
-      }
-    } catch (error) {
-      console.error('Erro de conexão:', error)
-    }
-  }
-
-  const updateBilling = (id: string, updates: Partial<Billing>) => {
-    const billing = billings.find((b) => b.id === id)
-    setBillings(billings.map((billing) => (billing.id === id ? { ...billing, ...updates } : billing)))
-
-    if (billing) {
-      auditService.log({
-        userId: user.id,
-        userName: user.name,
-        action: "UPDATE",
-        resource: "BILLING",
-        resourceId: id,
-        details: `Atualizou cobrança de ${billing.customerName}${updates.status ? ` - Status: ${updates.status}` : ""}`,
-      })
-    }
-  }
-
-  const deleteBilling = (id: string) => {
-    const billing = billings.find((b) => b.id === id)
-    setBillings(billings.filter((billing) => billing.id !== id))
-
-    if (billing) {
-      auditService.log({
-        userId: user.id,
-        userName: user.name,
-        action: "DELETE",
-        resource: "BILLING",
-        resourceId: id,
-        details: `Excluiu cobrança de ${billing.customerName}`,
-      })
+  const handleSubmitBilling = async (billing: Omit<Billing, "id" | "createdAt">) => {
+    if (await addBillingToDb(billing)) {
+      setShowBillingForm(false)
     }
   }
 
@@ -418,14 +288,26 @@ export default function BillingSystem() {
                   <CardContent>
                     <BillingForm
                       customers={customers}
-                      onSubmit={addBilling}
+                      onSubmit={handleSubmitBilling}
                       onCancel={() => setShowBillingForm(false)}
                     />
                   </CardContent>
                 </Card>
               )}
 
-              <BillingList billings={billings} onUpdate={updateBilling} onDelete={deleteBilling} onSendEmail={sendEmailCobranca} />
+              {loadingBillings ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                  <p className="mt-2 text-muted-foreground">Carregando cobranças...</p>
+                </div>
+              ) : (
+                <BillingList
+                  billings={billings}
+                  onUpdate={updateBillingInDb}
+                  onDelete={deleteBillingFromDb}
+                  onSendEmail={sendEmailCobranca}
+                />
+              )}
             </ProtectedRoute>
           </TabsContent>
 

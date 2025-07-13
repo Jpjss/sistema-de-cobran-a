@@ -1,5 +1,6 @@
 "use client"
 
+import { formatDateBR } from "@/lib/date-utils"
 import { useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -130,12 +131,12 @@ export function BillingList({ billings, onUpdate, onDelete, onSendEmail }: Billi
                       {billing.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                     </p>
                     <p className="text-xs text-gray-500">
-                      Vencimento: {new Date(billing.dueDate).toLocaleDateString("pt-BR")}
+                      Vencimento: {formatDateBR(billing.dueDate)}
                     </p>
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-gray-500">
-                      Criado em: {new Date(billing.createdAt).toLocaleDateString("pt-BR")}
+                      Criado em: {formatDateBR(billing.createdAt)}
                     </p>
                   </div>
                 </div>

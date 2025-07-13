@@ -20,10 +20,10 @@ export class EmailScheduler {
     // Rodar imediatamente na inicialização
     this.checkAndSendEmails()
     
-    // Agendar para rodar a cada hora (3600000 ms)
+    // Agendar para rodar a cada 2 minutos (120000 ms)
     this.intervalId = setInterval(() => {
       this.checkAndSendEmails()
-    }, 3600000) // 1 hora
+    }, 120000) // 2 minutos
   }
 
   // Parar o agendador
@@ -69,12 +69,37 @@ export class EmailScheduler {
 
       // Buscar cobranças em atraso (sem alerta enviado)
       const cobrancasAtrasadas = await db.collection("cobrancas").find({
-        status: "pending", // Corrigido: era "pendente"
-        vencimento: { $lt: hojeStr },
-        alertaAtrasadoEnviado: { $ne: true }
+        $or: [
+          // Cobranças pendentes que estão atrasadas
+          {
+            status: { $in: ["pending", "pendente"] },
+            vencimento: { $lt: hojeStr }
+          },
+          // Cobranças já marcadas como atrasadas mas que não receberam alerta
+          {
+            status: "overdue",
+            alertaAtrasadoEnviado: { $ne: true }
+          }
+        ]
       }).toArray()
 
+      // Log da query de cobranças atrasadas para debug
+      console.log("🔍 Query de cobranças atrasadas:", {
+        status: { $in: ["pending", "pendente"] },
+        vencimento: { $lt: hojeStr },
+        alertaAtrasadoEnviado: { $ne: true }
+      })
+
       console.log(`🚨 Encontradas ${cobrancasAtrasadas.length} cobranças em atraso`)
+      
+      // Verificar todas as cobranças para debug
+      const todasCobrancas = await db.collection("cobrancas").find({}).toArray()
+      console.log("📊 Resumo de todas as cobranças:", todasCobrancas.map(c => ({
+        id: c._id,
+        status: c.status,
+        vencimento: c.vencimento,
+        alertaEnviado: c.alertaAtrasadoEnviado || false
+      })))
 
       // Log detalhado das cobranças atrasadas
       if (cobrancasAtrasadas.length > 0) {
@@ -135,8 +160,16 @@ export class EmailScheduler {
           // Atualizar status e marcar alerta enviado
           await db.collection("cobrancas").updateOne(
             { _id: cobranca._id },
-            { $set: { status: "overdue", alertaAtrasadoEnviado: true } }
+            { 
+              $set: { 
+                status: "overdue", 
+                alertaAtrasadoEnviado: true,
+                atualizadoEm: new Date()
+              } 
+            }
           )
+          
+          console.log(`📢 Cobrança ${cobranca._id} marcada como atrasada e alerta enviado`)
           
           console.log(`✅ Alerta adicionado à fila para: ${cobranca.clienteId}`)
         } catch (error) {

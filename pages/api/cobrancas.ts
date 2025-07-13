@@ -61,7 +61,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         descricao,
         valor,
         vencimento: formatDate(vencimento),
-        status: status || "pendente",
+        status: status || "pending", // Padronizando para inglês
         criadoEm: formatDateTime(new Date()),
       };
       const result = await db.collection("cobrancas").insertOne(cobranca);
@@ -109,8 +109,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     } catch (error) {
       return res.status(500).json({ error: "Erro ao atualizar cobrança.", details: error instanceof Error ? error.message : "Erro desconhecido" });
     }
+  } else if (req.method === "DELETE") {
+    try {
+      const { id } = req.body;
+      if (!id) {
+        return res.status(400).json({ error: "ID da cobrança é obrigatório." });
+      }
+
+      const db = await getDb();
+      const { ObjectId } = require('mongodb');
+      
+      const result = await db.collection("cobrancas").deleteOne({ _id: new ObjectId(id) });
+      
+      if (result.deletedCount === 1) {
+        return res.status(200).json({ success: true });
+      } else {
+        return res.status(404).json({ error: "Cobrança não encontrada." });
+      }
+    } catch (error) {
+      return res.status(500).json({ error: "Erro ao excluir cobrança.", details: error instanceof Error ? error.message : "Erro desconhecido" });
+    }
   } else {
-    res.setHeader("Allow", ["GET", "POST", "PUT"]);
+    res.setHeader("Allow", ["GET", "POST", "PUT", "DELETE"]);
     res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 }
