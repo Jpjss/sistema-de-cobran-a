@@ -1,6 +1,9 @@
 import { getDb } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 
+// Garantir que use Node.js runtime
+export const runtime = 'nodejs'
+
 export default async function handler(req, res) {
   if (req.method === "POST") {
     const db = await getDb();

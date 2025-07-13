@@ -1,0 +1,3 @@
+# FynApp - Sistema de Cobrança
+
+Favicon configurado automaticamente.

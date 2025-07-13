@@ -2,6 +2,11 @@ import { getDb } from "@/lib/mongodb";
 import { EmailService, getEmailConfig } from "@/lib/email-service"
 import type { NextApiRequest, NextApiResponse } from "next"
 
+// Garantir que use Node.js runtime
+export const runtime = 'nodejs'
+
+import { formatDate, formatDateTime } from "@/lib/date-utils"
+
 // Função para processar eventos de cobrança
 async function processCobrancaEvent(cobranca: any, eventType: 'created' | 'updated') {
   try {
@@ -55,9 +60,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         clienteId,
         descricao,
         valor,
-        vencimento,
+        vencimento: formatDate(vencimento),
         status: status || "pendente",
-        criadoEm: new Date(),
+        criadoEm: formatDateTime(new Date()),
       };
       const result = await db.collection("cobrancas").insertOne(cobranca);
       

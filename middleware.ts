@@ -1,21 +1,21 @@
 import { NextRequest, NextResponse } from "next/server"
 
-// Esta função roda antes de cada requisição de API
+// Middleware simples que não causa conflitos com Edge Runtime
 export function middleware(request: NextRequest) {
-  // Só executar no servidor
-  if (typeof window === 'undefined') {
-    // Garantir que os serviços estejam rodando em toda requisição
-    import('@/lib/ensure-services').then(module => {
-      module.ensureServicesRunning()
-    }).catch(error => {
-      console.error("❌ Erro no middleware ensure-services:", error)
-    })
-  }
-
+  // Simplesmente continuar sem executar nenhuma lógica complexa
   return NextResponse.next()
 }
 
-// Configurar para rodar em todas as rotas de API
+// Configurar para não interferir em rotas importantes
 export const config = {
-  matcher: '/api/:path*',
+  matcher: [
+    /*
+     * Não aplicar middleware em:
+     * - api routes (para evitar conflitos)
+     * - _next/static (arquivos estáticos)
+     * - _next/image (otimização de imagem)
+     * - favicon.ico (ícone)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
 }

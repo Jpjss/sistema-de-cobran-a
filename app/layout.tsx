@@ -10,7 +10,7 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "FynApp",
   description: "FynApp - Sistema completo de gerenciamento de cobranças e clientes",
-  generator: "v0.dev"
+  generator: "v0.dev",
 }
 
 // Inicializar serviços automáticos no servidor
@@ -35,6 +35,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
+      <head>
+        <link rel="icon" type="image/png" href="/placeholder-logo.png" />
+        <link rel="shortcut icon" href="/placeholder-logo.png" />
+        <link rel="apple-touch-icon" href="/placeholder-logo.png" />
+      </head>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange={false}>
           <AuthProvider>{children}</AuthProvider>
