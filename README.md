@@ -1,30 +1,96 @@
-# Sistema de cobrança
+# FynApp - Sistema de Cobrança
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+## Descrição
+FynApp é um sistema completo para gerenciamento de cobranças, clientes e envio automático de e-mails de lembrete. O sistema foi desenvolvido com Next.js, TypeScript, MongoDB (via Prisma) e integrações modernas de UI/UX.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/jpjss-projects/v0-sistema-de-cobranca)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/Vt2nDXshG1q)
+## Funcionalidades
+- Cadastro e gerenciamento de clientes
+- Cadastro, edição e exclusão de cobranças
+- Envio automático de e-mails de lembrete diário até a cobrança ser paga
+- Envio de e-mails de confirmação de pagamento
+- Painel de controle com filtros, busca e status das cobranças
+- Log de auditoria de ações
+- Sistema de autenticação
+- Responsividade e design moderno
 
-## Overview
+## Tecnologias Utilizadas
+- Next.js 14+
+- TypeScript
+- Prisma ORM (MongoDB)
+- Nodemailer (envio de e-mails)
+- TailwindCSS
+- React Hooks
+- Playwright (testes automatizados)
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
+## Estrutura de Pastas
+```
+├── app/                # App Router do Next.js (páginas, layout, estilos globais)
+├── components/         # Componentes reutilizáveis de UI e lógica
+├── hooks/              # React hooks customizados (ex: useBillings, useAuth)
+├── lib/                # Lógica de negócio, integração com banco, e-mail, agendadores
+├── pages/api/          # Endpoints de API (REST)
+├── prisma/             # Schema do Prisma
+├── public/             # Imagens e arquivos estáticos
+├── styles/             # Estilos globais
+```
 
-## Deployment
+## Como rodar o projeto
+1. **Clone o repositório:**
+   ```
+   git clone <url-do-repo>
+   cd sistema-de-cobranca
+   ```
+2. **Instale as dependências:**
+   ```
+   npm install
+   ```
+3. **Configure o banco de dados:**
+   - Crie um arquivo `.env` na raiz com:
+     ```
+     DATABASE_URL="mongodb://localhost:27017/cobranca"
+     # Configurações SMTP para envio de e-mails
+     GMAIL_SMTP_HOST=smtp.gmail.com
+     GMAIL_SMTP_PORT=587
+     GMAIL_SMTP_SECURE=false
+     GMAIL_SMTP_USER=seu-email@gmail.com
+     GMAIL_SMTP_PASSWORD=sua-senha-ou-app-password
+     GMAIL_FROM_EMAIL=seu-email@gmail.com
+     GMAIL_FROM_NAME=FynApp
+     ```
+4. **Gere o cliente Prisma:**
+   ```
+   npx prisma generate
+   ```
+5. **Inicie o servidor de desenvolvimento:**
+   ```
+   npm run dev
+   ```
 
-Your project is live at:
+## Testes automatizados
+- Os testes E2E estão em `tests/` e `__tests__/`.
+- Para rodar os testes Playwright:
+  ```
+  npx playwright test
+  ```
 
-**[https://vercel.com/jpjss-projects/v0-sistema-de-cobranca](https://vercel.com/jpjss-projects/v0-sistema-de-cobranca)**
+## Agendamento de e-mails
+- O sistema envia lembretes diários automáticos para cobranças pendentes.
+- O envio é controlado para garantir apenas 1 e-mail por dia por cobrança.
+- O agendamento é feito via `lib/daily-reminder-scheduler.ts` e a fila de e-mails via `lib/email-queue.ts`.
 
-## Build your app
+## Estrutura do banco de dados (Prisma)
+- O schema está em `prisma/schema.prisma`.
+- Principais modelos:
+  - `Customer`: clientes
+  - `Billing`: cobranças (com controle de lembretes enviados)
 
-Continue building your app on:
+## Observações
+- O sistema é totalmente responsivo.
+- O envio de e-mails depende de configuração SMTP válida.
+- Logs de auditoria são registrados para ações críticas.
 
-**[https://v0.dev/chat/projects/Vt2nDXshG1q](https://v0.dev/chat/projects/Vt2nDXshG1q)**
+## Contribuição
+Pull requests são bem-vindos! Para grandes mudanças, abra uma issue primeiro para discutir o que você gostaria de mudar.
 
-## How It Works
-
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+## Licença
+MIT
