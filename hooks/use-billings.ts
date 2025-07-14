@@ -120,37 +120,53 @@ export function useBillings(user: any) {
 
   const deleteBilling = async (id: string) => {
     const billing = billings.find((b) => b.id === id)
-    if (billing) {
-      try {
-        const response = await fetch(`/api/cobrancas`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ id }),
-        })
+    if (!billing) {
+      alert("Cobrança não encontrada!")
+      return false
+    }
 
-        if (response.ok) {
-          // Recarregar a lista de cobranças
-          await fetchBillings()
+    // Confirmação antes de excluir
+    const confirmDelete = confirm(`Tem certeza que deseja excluir a cobrança de ${billing.customerName} no valor de ${billing.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}?`)
+    
+    if (!confirmDelete) {
+      return false
+    }
 
-          if (user) {
-            auditService.log({
-              userId: user.id,
-              userName: user.name,
-              action: "DELETE",
-              resource: "BILLING",
-              resourceId: id,
-              details: `Excluiu cobrança de ${billing.customerName}`,
-            })
-          }
-          return true
+    try {
+      const response = await fetch(`/api/cobrancas`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id }),
+      })
+
+      if (response.ok) {
+        // Recarregar a lista de cobranças
+        await fetchBillings()
+
+        if (user) {
+          auditService.log({
+            userId: user.id,
+            userName: user.name,
+            action: "DELETE",
+            resource: "BILLING",
+            resourceId: id,
+            details: `Excluiu cobrança de ${billing.customerName}`,
+          })
         }
-        return false
-      } catch (error) {
-        console.error('Erro ao excluir cobrança:', error)
+        
+        alert("Cobrança excluída com sucesso!")
+        return true
+      } else {
+        const errorData = await response.json()
+        alert(`Erro ao excluir cobrança: ${errorData.error || 'Erro desconhecido'}`)
         return false
       }
+    } catch (error) {
+      console.error('Erro ao excluir cobrança:', error)
+      alert("Erro de conexão ao tentar excluir a cobrança!")
+      return false
     }
     return false
   }

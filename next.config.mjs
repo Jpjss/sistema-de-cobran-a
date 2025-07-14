@@ -16,7 +16,7 @@ const nextConfig = {
   },
   // Configurações para melhorar estabilidade
   reactStrictMode: false,
-  swcMinify: false,
+  // Removido swcMinify para usar a configuração padrão do Next.js
   // Configurações de desenvolvimento
   ...(process.env.NODE_ENV === 'development' && {
     onDemandEntries: {

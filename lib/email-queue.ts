@@ -1,6 +1,6 @@
 interface EmailJob {
   id: string
-  type: 'reminder' | 'overdue' | 'payment_confirmation' | 'test'
+  type: 'reminder' | 'overdue' | 'payment_confirmation' | 'test' | 'daily_reminder'
   email: string
   customerName: string
   data: any
@@ -14,6 +14,7 @@ export class EmailQueue {
   private queue: EmailJob[] = []
   private processing = false
   private processingInterval: NodeJS.Timeout | null = null
+  private lastProcessingDates: Map<string, Date> = new Map()
 
   constructor() {}
 
@@ -27,10 +28,10 @@ export class EmailQueue {
     console.log("🚀 Iniciando processamento da fila de e-mails...")
     this.processing = true
     
-    // Processar a cada 30 segundos
+    // Processar a cada 1 hora
     this.processingInterval = setInterval(() => {
       this.processQueue()
-    }, 30000)
+    }, 60 * 60 * 1000) // 1 hora
     
     // Processar imediatamente
     this.processQueue()
@@ -95,6 +96,25 @@ export class EmailQueue {
     })
   }
 
+  // Adicionar lembrete diário à fila
+  async addDailyReminderJob(email: string, customerName: string, billing: any) {
+    // Verificar se já foi enviado hoje
+    if (!this.canSendEmail(email, 'daily_reminder')) {
+      console.log(`⏳ Lembrete diário já foi enviado hoje para ${email}`)
+      return null
+    }
+
+    const jobId = await this.addJob({
+      type: 'daily_reminder',
+      email,
+      customerName, 
+      data: billing,
+      maxAttempts: 3
+    })
+
+    return jobId
+  }
+
   // Processar a fila
   private async processQueue() {
     if (this.queue.length === 0) {
@@ -137,41 +157,91 @@ export class EmailQueue {
     }
   }
 
+  private getEmailKey(email: string, type: string): string {
+    return `${email}-${type}`
+  }
+
+  private canSendEmail(email: string, type: string): boolean {
+    const key = this.getEmailKey(email, type)
+    const lastDate = this.lastProcessingDates.get(key)
+    
+    if (!lastDate) return true
+
+    const now = new Date()
+    const hoursSinceLastEmail = (now.getTime() - lastDate.getTime()) / (1000 * 60 * 60)
+    
+    // Se for um lembrete diário, verificar se já passou 24 horas
+    if (type === 'daily_reminder') {
+      return hoursSinceLastEmail >= 24
+    }
+    
+    // Para outros tipos de e-mail, permitir envio após 1 hora
+    return hoursSinceLastEmail >= 1
+  }
+
   // Processar um job específico
   private async processEmailJob(job: EmailJob): Promise<boolean> {
+    // Verificar se pode enviar o e-mail
+    if (!this.canSendEmail(job.email, job.type)) {
+      console.log(`⏳ Aguardando intervalo mínimo para enviar e-mail para ${job.email}`)
+      return false
+    }
+
     const { EmailService, getEmailConfig } = await import("@/lib/email-service")
     const emailService = new EmailService(getEmailConfig("gmail"))
 
     try {
+      let success = false;
+      
       switch (job.type) {
         case 'reminder':
-          return await emailService.sendDueReminder(
+          success = await emailService.sendDueReminder(
             job.email,
             job.customerName,
             job.data
           )
+          break;
         
         case 'overdue':
-          return await emailService.sendOverdueAlert(
+          success = await emailService.sendOverdueAlert(
             job.email,
             job.customerName,
             job.data
           )
+          break;
         
         case 'payment_confirmation':
-          return await emailService.sendPaymentConfirmation(
+          success = await emailService.sendPaymentConfirmation(
             job.email,
             job.customerName,
             job.data
           )
+          break;
+
+        case 'daily_reminder':
+          success = await emailService.sendDailyReminder(
+            job.email,
+            job.customerName,
+            job.data
+          )
+          break;
         
         case 'test':
-          return await emailService.sendTestEmail(job.email)
+          success = await emailService.sendTestEmail(job.email)
+          break;
         
         default:
           console.error(`❌ Tipo de job desconhecido: ${job.type}`)
           return false
       }
+
+      if (success) {
+        // Registrar hora do envio
+        const key = this.getEmailKey(job.email, job.type)
+        this.lastProcessingDates.set(key, new Date())
+      }
+
+      return success;
     } catch (error) {
       console.error(`❌ Erro ao enviar e-mail para job ${job.id}:`, error)
       return false

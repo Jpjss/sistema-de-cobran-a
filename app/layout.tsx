@@ -1,16 +1,23 @@
-import type React from "react"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Inter } from 'next/font/google'
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/hooks/use-auth"
 
-const inter = Inter({ subsets: ["latin"] })
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+})
 
 export const metadata: Metadata = {
   title: "FynApp",
-  description: "FynApp - Sistema completo de gerenciamento de cobranças e clientes",
-  generator: "v0.dev",
+  description: "Sistema de Cobrança",
+  icons: {
+    icon: [
+      { url: '/placeholder-logo.png', type: 'image/png' }
+    ]
+  }
 }
 
 // Inicializar serviços automáticos no servidor
@@ -35,11 +42,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <head>
-        <link rel="icon" type="image/png" href="/placeholder-logo.png" />
-        <link rel="shortcut icon" href="/placeholder-logo.png" />
-        <link rel="apple-touch-icon" href="/placeholder-logo.png" />
-      </head>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange={false}>
           <AuthProvider>{children}</AuthProvider>

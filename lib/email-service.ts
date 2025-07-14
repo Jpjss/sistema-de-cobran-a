@@ -232,6 +232,39 @@ FynApp`,
 
     return this.sendEmail(to, template)
   }
+
+  // Enviar lembrete diário
+  async sendDailyReminder(customerEmail: string, customerName: string, billing: any): Promise<boolean> {
+    const template: EmailTemplate = {
+      subject: "📢 Lembrete de Cobrança Pendente",
+      body: `Olá {{customerName}},
+
+Esta é uma notificação diária sobre sua cobrança pendente.
+
+📋 Detalhes da cobrança:
+• Descrição: {{description}}
+• Valor: {{amount}}
+• Data de vencimento: {{dueDate}}
+{{overdueWarning}}
+
+Por favor, entre em contato conosco caso precise de algum esclarecimento ou tenha dificuldade para efetuar o pagamento.
+
+Atenciosamente,
+Equipe de Cobrança
+
+---
+Este é um e-mail automático. Você receberá este lembrete diariamente até que a cobrança seja paga.`,
+      variables: {
+        customerName,
+        description: billing.description,
+        amount: billing.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
+        dueDate: billing.dueDate.includes('T') ? new Date(billing.dueDate).toLocaleDateString("pt-BR") : billing.dueDate.split('-').reverse().join('/'),
+        overdueWarning: new Date(billing.dueDate) < new Date() ? "\n⚠️ ATENÇÃO: Esta cobrança está em atraso!" : "",
+      },
+    }
+
+    return this.sendEmail(customerEmail, template)
+  }
 }
 
 

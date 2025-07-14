@@ -112,6 +112,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } else if (req.method === "DELETE") {
     try {
       const { id } = req.body;
+      
+      // Validação do ID
       if (!id) {
         return res.status(400).json({ error: "ID da cobrança é obrigatório." });
       }
@@ -119,15 +121,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const db = await getDb();
       const { ObjectId } = require('mongodb');
       
+      // Verifica se a cobrança existe antes de tentar excluir
+      const cobranca = await db.collection("cobrancas").findOne({ _id: new ObjectId(id) });
+      
+      if (!cobranca) {
+        return res.status(404).json({ error: "Cobrança não encontrada." });
+      }
+      
+      // Executa a exclusão
       const result = await db.collection("cobrancas").deleteOne({ _id: new ObjectId(id) });
       
       if (result.deletedCount === 1) {
-        return res.status(200).json({ success: true });
+        return res.status(200).json({ 
+          success: true,
+          message: "Cobrança excluída com sucesso."
+        });
       } else {
-        return res.status(404).json({ error: "Cobrança não encontrada." });
+        return res.status(500).json({ error: "Erro ao excluir cobrança." });
       }
     } catch (error) {
-      return res.status(500).json({ error: "Erro ao excluir cobrança.", details: error instanceof Error ? error.message : "Erro desconhecido" });
+      console.error("Erro ao excluir cobrança:", error);
+      return res.status(500).json({ 
+        error: "Erro ao excluir cobrança.", 
+        details: error instanceof Error ? error.message : "Erro desconhecido" 
+      });
     }
   } else {
     res.setHeader("Allow", ["GET", "POST", "PUT", "DELETE"]);

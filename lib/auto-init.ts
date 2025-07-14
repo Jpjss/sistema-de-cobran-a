@@ -1,6 +1,7 @@
 // Arquivo para inicializar serviços automáticos quando o servidor iniciar
 import { emailScheduler } from "./email-scheduler"
 import { emailQueue } from "./email-queue"
+import { dailyReminderScheduler } from "./daily-reminder-scheduler"
 
 let servicesInitialized = false
 
@@ -21,6 +22,10 @@ export function initializeAutomatedServices() {
     // Iniciar agendador
     emailScheduler.start()
     console.log("✅ Agendador de e-mails iniciado")
+
+    // Iniciar agendador de lembretes diários
+    dailyReminderScheduler.start()
+    console.log("✅ Agendador de lembretes diários iniciado")
     
     servicesInitialized = true
     console.log("🎉 Todos os serviços automáticos foram iniciados com sucesso!")
@@ -39,6 +44,7 @@ export function stopAutomatedServices() {
   try {
     emailQueue.stop()
     emailScheduler.stop()
+    dailyReminderScheduler.stop()
     
     servicesInitialized = false
     console.log("✅ Todos os serviços automáticos foram parados")
@@ -53,7 +59,11 @@ export function stopAutomatedServices() {
 export function getServicesStatus() {
   return {
     initialized: servicesInitialized,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    services: {
+      emailQueue: emailQueue.getStatus(),
+      dailyReminders: dailyReminderScheduler.getStatus()
+    }
   }
 }
 

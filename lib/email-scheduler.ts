@@ -4,6 +4,7 @@ import { emailQueue } from "@/lib/email-queue"
 export class EmailScheduler {
   private isRunning = false
   private intervalId: NodeJS.Timeout | null = null
+  private ultimoEnvioDiario: string | null = null
 
   constructor() {}
 
@@ -39,12 +40,18 @@ export class EmailScheduler {
   // Verificar e adicionar e-mails à fila
   private async checkAndSendEmails() {
     try {
-      console.log("🔍 Verificando cobranças a vencer...")
+      console.log("🔍 Verificando todas as cobranças não pagas...")
       console.log("📅 Data/hora atual:", new Date().toISOString())
+      
+      // Verifica se já enviamos lembretes hoje
+      const dataAtual = new Date()
+      const diaAtual = dataAtual.getDate()
+      const ultimoEnvio = this.ultimoEnvioDiario ? new Date(this.ultimoEnvioDiario) : null
+      const deveEnviarLembretesDiarios = !ultimoEnvio || ultimoEnvio.getDate() !== diaAtual
       
       const db = await getDb()
       
-      // Data atual
+      // Data atual e amanhã
       const hoje = new Date()
       const amanha = new Date(hoje)
       amanha.setDate(hoje.getDate() + 1)
@@ -67,7 +74,41 @@ export class EmailScheduler {
 
       console.log(`📋 Encontradas ${cobrancasAVencer.length} cobranças a vencer`)
 
-      // Buscar cobranças em atraso (sem alerta enviado)
+      // Buscar todas as cobranças não pagas
+      const cobrancasNaoPagas = await db.collection("cobrancas").find({
+        status: { $in: ["pending", "pendente", "overdue"] }
+      }).toArray()
+
+      console.log(`📋 Encontradas ${cobrancasNaoPagas.length} cobranças não pagas`)
+
+      // Se for um novo dia, enviar lembretes diários
+      if (deveEnviarLembretesDiarios) {
+        console.log("📬 Enviando lembretes diários para todas as cobranças não pagas...")
+        
+        for (const cobranca of cobrancasNaoPagas) {
+          try {
+            await emailQueue.addDailyReminderJob(
+              cobranca.clienteId,
+              cobranca.clienteId,
+              {
+                description: cobranca.descricao,
+                amount: cobranca.valor,
+                dueDate: cobranca.vencimento,
+                status: cobranca.status
+              }
+            )
+            console.log(`✅ Lembrete diário adicionado à fila para: ${cobranca.clienteId}`)
+          } catch (error) {
+            console.error(`❌ Erro ao adicionar lembrete diário para ${cobranca.clienteId}:`, error)
+          }
+        }
+
+        // Atualizar data do último envio
+        this.ultimoEnvioDiario = new Date().toISOString()
+        console.log("✅ Lembretes diários enviados com sucesso")
+      }
+
+      // Buscar cobranças que precisam de alerta de atraso (primeira notificação)
       const cobrancasAtrasadas = await db.collection("cobrancas").find({
         $or: [
           // Cobranças pendentes que estão atrasadas
