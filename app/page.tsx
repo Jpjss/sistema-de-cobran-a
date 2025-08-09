@@ -1,10 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, DollarSign, Users, FileText, TrendingUp, Bell, Settings, Shield } from "lucide-react"
+import { Plus, DollarSign, Users, FileText, TrendingUp, Bell, Settings, Shield, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { BillingForm } from "@/components/billing-form"
 import { BillingList } from "@/components/billing-list"
 import { CustomerList } from "@/components/customer-list"
@@ -17,6 +18,7 @@ import { AuditLogComponent } from "@/components/audit-log"
 import { LoginForm } from "@/components/login-form"
 import { UserProfile } from "@/components/user-profile"
 import { ProtectedRoute } from "@/components/protected-route"
+import Reports from "@/components/reports"
 import { useAuth } from "@/hooks/use-auth"
 import { useBillings } from "@/hooks/use-billings"
 import { auditService } from "@/lib/audit"
@@ -46,6 +48,7 @@ export default function BillingSystem() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loadingCustomers, setLoadingCustomers] = useState(true)
   const [showBillingForm, setShowBillingForm] = useState(false)
+  const [activeTab, setActiveTab] = useState("dashboard")
   const { billings, loadingBillings, addBilling: addBillingToDb, updateBilling: updateBillingInDb, deleteBilling: deleteBillingFromDb } = useBillings(user)
 
   // Carregar clientes do banco ao abrir a aba
@@ -211,162 +214,200 @@ export default function BillingSystem() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src="/logo.FynApp.png" alt="Logo FynApp" style={{ width: 64, height: 64 }} />
-          </div>
-          <div className="flex-1 flex flex-col items-center">
-            <h1 className="text-3xl font-bold text-foreground">FynApp</h1>
-            <p className="text-muted-foreground mt-2 text-center">Gerencie suas cobranças e clientes de forma eficiente com o FynApp</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <UserProfile />
-          </div>
-        </div>
-
-        <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8">
-            <TabsTrigger value="dashboard" className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Dashboard
-            </TabsTrigger>
-            <TabsTrigger value="billings" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Cobranças
-            </TabsTrigger>
-            <TabsTrigger value="customers" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Clientes
-            </TabsTrigger>
-            <TabsTrigger value="reports" className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
-              Relatórios
-            </TabsTrigger>
-            <TabsTrigger value="notifications" className="flex items-center gap-2">
-              <Bell className="h-4 w-4" />
-              Notificações
-            </TabsTrigger>
-            <TabsTrigger value="users" className="flex items-center gap-2">
-              <Shield className="h-4 w-4" />
-              Usuários
-            </TabsTrigger>
-            <TabsTrigger value="audit" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Auditoria
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              Config
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="dashboard">
-            <ProtectedRoute permission="canViewDashboard">
-              <Dashboard billings={billings} customers={customers} />
-            </ProtectedRoute>
-          </TabsContent>
-
-          <TabsContent value="billings" className="space-y-6">
-            <ProtectedRoute permission="canManageBillings">
-              <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-semibold">Cobranças</h2>
-                <Button onClick={() => setShowBillingForm(true)} className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  Nova Cobrança
-                </Button>
+    <SidebarProvider>
+      <div className="min-h-screen bg-background flex">
+        <Sidebar className="border-r">
+          <SidebarContent>
+            <div className="p-4">
+              <div className="flex items-center gap-3 mb-6">
+                <img src="/logo.FynApp.png" alt="Logo FynApp" style={{ width: 32, height: 32 }} />
+                <h1 className="text-xl font-bold text-foreground">FynApp</h1>
               </div>
+            </div>
+            
+            <SidebarGroup>
+              <SidebarGroupLabel>Sistema</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton onClick={() => setActiveTab("dashboard")} isActive={activeTab === "dashboard"}>
+                      <TrendingUp className="h-4 w-4" />
+                      <span>Dashboard</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton onClick={() => setActiveTab("billings")} isActive={activeTab === "billings"}>
+                      <FileText className="h-4 w-4" />
+                      <span>Cobranças</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton onClick={() => setActiveTab("customers")} isActive={activeTab === "customers"}>
+                      <Users className="h-4 w-4" />
+                      <span>Clientes</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton onClick={() => setActiveTab("reports")} isActive={activeTab === "reports"}>
+                      <DollarSign className="h-4 w-4" />
+                      <span>Relatórios</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
 
-              {showBillingForm && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Nova Cobrança</CardTitle>
-                    <CardDescription>Preencha os dados para criar uma nova cobrança</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <BillingForm
-                      customers={customers}
-                      onSubmit={handleSubmitBilling}
-                      onCancel={() => setShowBillingForm(false)}
-                    />
-                  </CardContent>
-                </Card>
-              )}
+            <SidebarGroup>
+              <SidebarGroupLabel>Administração</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton onClick={() => setActiveTab("notifications")} isActive={activeTab === "notifications"}>
+                      <Bell className="h-4 w-4" />
+                      <span>Notificações</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton onClick={() => setActiveTab("users")} isActive={activeTab === "users"}>
+                      <Shield className="h-4 w-4" />
+                      <span>Usuários</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton onClick={() => setActiveTab("audit")} isActive={activeTab === "audit"}>
+                      <FileText className="h-4 w-4" />
+                      <span>Auditoria</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton onClick={() => setActiveTab("settings")} isActive={activeTab === "settings"}>
+                      <Settings className="h-4 w-4" />
+                      <span>Configurações</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
+        </Sidebar>
 
-              {loadingBillings ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                  <p className="mt-2 text-muted-foreground">Carregando cobranças...</p>
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <header className="border-b px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <SidebarTrigger />
+                <div>
+                  <h2 className="text-2xl font-semibold capitalize">{activeTab}</h2>
+                  <p className="text-muted-foreground text-sm">Gerencie suas cobranças e clientes de forma eficiente</p>
                 </div>
-              ) : (
-                <BillingList
-                  billings={billings}
-                  onUpdate={updateBillingInDb}
-                  onDelete={deleteBillingFromDb}
-                  onSendEmail={sendEmailCobranca}
-                />
-              )}
-            </ProtectedRoute>
-          </TabsContent>
-
-          <TabsContent value="customers">
-            <ProtectedRoute permission="canManageCustomers">
-          {loadingCustomers ? (
-            <div className="text-center py-8 text-muted-foreground">Carregando clientes...</div>
-          ) : (
-            <CustomerList
-              customers={customers}
-              onAdd={addCustomer}
-              onUpdate={updateCustomer}
-              onDelete={deleteCustomer}
-            />
-          )}
-            </ProtectedRoute>
-          </TabsContent>
-
-          <TabsContent value="reports">
-            <ProtectedRoute permission="canViewReports">
-              <div className="grid gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Relatórios Financeiros</CardTitle>
-                    <CardDescription>Análise detalhada das suas cobranças</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground">Funcionalidade de relatórios em desenvolvimento...</p>
-                  </CardContent>
-                </Card>
               </div>
-            </ProtectedRoute>
-          </TabsContent>
+              <div className="flex items-center gap-2">
+                <ThemeToggle />
+                <UserProfile />
+              </div>
+            </div>
+          </header>
 
-          <TabsContent value="notifications">
-            <ProtectedRoute permission="canManageNotifications">
-              <NotificationSystem billings={billings} />
-            </ProtectedRoute>
-          </TabsContent>
+          <main className="flex-1 overflow-auto p-6">
+            <div className="max-w-7xl mx-auto">
+              {activeTab === "dashboard" && (
+                <ProtectedRoute permission="canViewDashboard">
+                  <Dashboard billings={billings} customers={customers} />
+                </ProtectedRoute>
+              )}
 
-          <TabsContent value="users">
-            <ProtectedRoute permission="canManageUsers">
-              <UserManagement />
-            </ProtectedRoute>
-          </TabsContent>
+              {activeTab === "billings" && (
+                <ProtectedRoute permission="canManageBillings">
+                  <div className="space-y-6">
+                    <div className="flex justify-between items-center">
+                      <h2 className="text-2xl font-semibold">Cobranças</h2>
+                      <Button onClick={() => setShowBillingForm(true)} className="flex items-center gap-2">
+                        <Plus className="h-4 w-4" />
+                        Nova Cobrança
+                      </Button>
+                    </div>
 
-          <TabsContent value="audit">
-            <ProtectedRoute permission="canViewAudit">
-              <AuditLogComponent />
-            </ProtectedRoute>
-          </TabsContent>
+                    {showBillingForm && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Nova Cobrança</CardTitle>
+                          <CardDescription>Preencha os dados para criar uma nova cobrança</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <BillingForm
+                            customers={customers}
+                            onSubmit={handleSubmitBilling}
+                            onCancel={() => setShowBillingForm(false)}
+                          />
+                        </CardContent>
+                      </Card>
+                    )}
 
-          <TabsContent value="settings">
-            <ProtectedRoute permission="canManageSettings">
-              <ThemeSettings />
-            </ProtectedRoute>
-          </TabsContent>
-        </Tabs>
+                    {loadingBillings ? (
+                      <div className="text-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                        <p className="mt-2 text-muted-foreground">Carregando cobranças...</p>
+                      </div>
+                    ) : (
+                      <BillingList
+                        billings={billings}
+                        onUpdate={updateBillingInDb}
+                        onDelete={deleteBillingFromDb}
+                        onSendEmail={sendEmailCobranca}
+                      />
+                    )}
+                  </div>
+                </ProtectedRoute>
+              )}
+
+              {activeTab === "customers" && (
+                <ProtectedRoute permission="canManageCustomers">
+                  {loadingCustomers ? (
+                    <div className="text-center py-8 text-muted-foreground">Carregando clientes...</div>
+                  ) : (
+                    <CustomerList
+                      customers={customers}
+                      onAdd={addCustomer}
+                      onUpdate={updateCustomer}
+                      onDelete={deleteCustomer}
+                    />
+                  )}
+                </ProtectedRoute>
+              )}
+
+              {activeTab === "reports" && (
+                <ProtectedRoute permission="canViewReports">
+                  <Reports />
+                </ProtectedRoute>
+              )}
+
+              {activeTab === "notifications" && (
+                <ProtectedRoute permission="canManageNotifications">
+                  <NotificationSystem billings={billings} />
+                </ProtectedRoute>
+              )}
+
+              {activeTab === "users" && (
+                <ProtectedRoute permission="canManageUsers">
+                  <UserManagement />
+                </ProtectedRoute>
+              )}
+
+              {activeTab === "audit" && (
+                <ProtectedRoute permission="canViewAudit">
+                  <AuditLogComponent />
+                </ProtectedRoute>
+              )}
+
+              {activeTab === "settings" && (
+                <ProtectedRoute permission="canManageSettings">
+                  <ThemeSettings />
+                </ProtectedRoute>
+              )}
+            </div>
+          </main>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   )
 }
