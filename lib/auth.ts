@@ -43,7 +43,7 @@ const users: User[] = [
     id: "1",
     name: "Admin Sistema",
     email: "admin@sistema.com",
-    password: "$2b$10$mw3aekRlbOrDqyiqXVF.CuEfizHq8Fnx47QyhVvJ9KhBzKtL8Im7a", // jp22032006
+    password: "$2b$10$VPQWgHhkiujaA/lWxcCqROKHktE6tUmujvoN9FgBwx44U/lB.DCj.", // password
     role: "admin",
     createdAt: "2024-01-01",
     isActive: true,
@@ -52,7 +52,7 @@ const users: User[] = [
     id: "2",
     name: "João Financeiro",
     email: "financeiro@sistema.com",
-    password: "$2b$10$mw3aekRlbOrDqyiqXVF.CuEfizHq8Fnx47QyhVvJ9KhBzKtL8Im7a", // jp22032006
+    password: "$2b$10$VPQWgHhkiujaA/lWxcCqROKHktE6tUmujvoN9FgBwx44U/lB.DCj.", // password
     role: "financeiro",
     createdAt: "2024-01-01",
     isActive: true,
@@ -61,7 +61,7 @@ const users: User[] = [
     id: "3",
     name: "Maria Suporte",
     email: "suporte@sistema.com",
-    password: "$2b$10$mw3aekRlbOrDqyiqXVF.CuEfizHq8Fnx47QyhVvJ9KhBzKtL8Im7a", // jp22032006
+    password: "$2b$10$VPQWgHhkiujaA/lWxcCqROKHktE6tUmujvoN9FgBwx44U/lB.DCj.", // password
     role: "suporte",
     createdAt: "2024-01-01",
     isActive: true,
