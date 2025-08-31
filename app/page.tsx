@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, DollarSign, Users, FileText, TrendingUp, Bell, Settings, Shield, Menu } from "lucide-react"
+import { Plus, DollarSign, Users, FileText, TrendingUp, Bell, Settings, Shield, Menu, CreditCard } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -19,6 +19,7 @@ import { LoginForm } from "@/components/login-form"
 import { UserProfile } from "@/components/user-profile"
 import { ProtectedRoute } from "@/components/protected-route"
 import Reports from "@/components/reports"
+import { PaymentMethodsConfig } from "@/components/payment-methods-config"
 import { useAuth } from "@/hooks/use-auth"
 import { useBillings } from "@/hooks/use-billings"
 import { auditService } from "@/lib/audit"
@@ -253,6 +254,12 @@ export default function BillingSystem() {
                       <span>Relatórios</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton onClick={() => setActiveTab("payments")} isActive={activeTab === "payments"}>
+                      <CreditCard className="h-4 w-4" />
+                      <span>Pagamentos</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -378,6 +385,12 @@ export default function BillingSystem() {
               {activeTab === "reports" && (
                 <ProtectedRoute permission="canViewReports">
                   <Reports />
+                </ProtectedRoute>
+              )}
+
+              {activeTab === "payments" && (
+                <ProtectedRoute permission="canManageSettings">
+                  <PaymentMethodsConfig />
                 </ProtectedRoute>
               )}
 

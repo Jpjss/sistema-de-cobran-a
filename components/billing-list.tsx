@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
-import { MoreHorizontal, Search, Check, X, Mail } from "lucide-react"
+import { MoreHorizontal, Search, Check, X, Mail, CreditCard, QrCode, ExternalLink } from "lucide-react"
 import type { Billing } from "@/app/page"
 
 interface BillingListProps {
@@ -49,6 +49,24 @@ export function BillingList({ billings, onUpdate, onDelete, onSendEmail }: Billi
       default:
         return "Pendente"
     }
+  }
+
+  const generatePaymentLink = (billing: Billing) => {
+    // Gerar link de pagamento único
+    const baseUrl = window.location.origin;
+    const paymentUrl = `${baseUrl}/checkout/${billing.id}`;
+    
+    // Copiar para clipboard
+    navigator.clipboard.writeText(paymentUrl).then(() => {
+      // TODO: Mostrar toast de sucesso
+      console.log('Link de pagamento copiado!');
+    });
+  }
+
+  const openPaymentCheckout = (billing: Billing) => {
+    // Abrir checkout em nova aba
+    const paymentUrl = `/checkout/${billing.id}`;
+    window.open(paymentUrl, '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
   }
 
   return (
@@ -95,6 +113,18 @@ export function BillingList({ billings, onUpdate, onDelete, onSendEmail }: Billi
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      {billing.status !== "paid" && (
+                        <>
+                          <DropdownMenuItem onClick={() => openPaymentCheckout(billing)}>
+                            <CreditCard className="h-4 w-4 mr-2" />
+                            Receber Pagamento
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => generatePaymentLink(billing)}>
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            Copiar Link de Pagamento
+                          </DropdownMenuItem>
+                        </>
+                      )}
                       {onSendEmail && (billing.status === "overdue" || billing.status === "pending") && (
                         <DropdownMenuItem onClick={() => onSendEmail(billing)}>
                           <Mail className="h-4 w-4 mr-2" />
