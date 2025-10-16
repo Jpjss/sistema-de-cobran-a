@@ -70,7 +70,7 @@ const users: User[] = [
     id: "4",
     name: "Conta Suporte",
     email: "jp0886230@gmail.com",
-    password: "$2b$10$mw3aekRlbOrDqyiqXVF.CuEfizHq8Fnx47QyhVvJ9KhBzKtL8Im7a", // jp22032006
+    password: "$2b$10$pYlKuq.3VCrjJMYNSgBehuZOsRfMrBaKFn7Uu6Es6vl7Ff3clMFoS", // " jp22032006" (COM espaço no início)
     role: "admin", // Alterado para admin para acesso total
     createdAt: "2025-06-29",
     isActive: true,
@@ -88,7 +88,7 @@ export const authService = {
       return null
     }
 
-    const password = credentials.password.trim();
+    const password = credentials.password; // NÃO fazer trim na senha para preservar espaços
     const isValidPassword = await bcrypt.compare(password, user.password)
 
     if (!isValidPassword) {

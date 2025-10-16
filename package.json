@@ -14,7 +14,6 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
-    "@next/font": "^14.2.15",
     "@prisma/client": "^6.11.1",
     "@radix-ui/react-accordion": "latest",
     "@radix-ui/react-alert-dialog": "latest",
@@ -66,7 +65,7 @@
     "react-hook-form": "latest",
     "react-resizable-panels": "latest",
     "recharts": "latest",
-    "sonner": "latest",
+    "sonner": "^2.0.7",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "latest",

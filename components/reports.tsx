@@ -13,8 +13,10 @@ import {
 } from 'recharts'
 import { 
   TrendingUp, TrendingDown, DollarSign, AlertTriangle, 
-  Calendar, Mail, Activity, Users, Clock, RefreshCw
+  Calendar, Mail, Activity, Users, Clock, RefreshCw, Wifi, WifiOff
 } from 'lucide-react'
+import { useReportsData } from '@/hooks/use-reports-data'
+import { toast } from 'sonner'
 
 interface RelatorioFinanceiro {
   resumo: {
@@ -120,53 +122,70 @@ const formatPercent = (value: number) => {
 }
 
 export default function Reports() {
-  const [relatorioFinanceiro, setRelatorioFinanceiro] = useState<RelatorioFinanceiro | null>(null)
-  const [relatorioInadimplencia, setRelatorioInadimplencia] = useState<RelatorioInadimplencia | null>(null)
-  const [relatorioAtividades, setRelatorioAtividades] = useState<RelatorioAtividades | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('financeiro')
-
-  const carregarDados = async () => {
-    setLoading(true)
-    setError(null)
-    
-    try {
-      const [resFinanceiro, resInadimplencia, resAtividades] = await Promise.all([
-        fetch('/api/reports/financeiro'),
-        fetch('/api/reports/inadimplencia'),
-        fetch('/api/reports/atividades')
-      ])
-
-      if (!resFinanceiro.ok || !resInadimplencia.ok || !resAtividades.ok) {
-        throw new Error('Erro ao carregar relatórios')
-      }
-
-      const [dataFinanceiro, dataInadimplencia, dataAtividades] = await Promise.all([
-        resFinanceiro.json(),
-        resInadimplencia.json(),
-        resAtividades.json()
-      ])
-
-      setRelatorioFinanceiro(dataFinanceiro)
-      setRelatorioInadimplencia(dataInadimplencia)
-      setRelatorioAtividades(dataAtividades)
-    } catch (err) {
-      setError('Erro ao carregar dados dos relatórios')
-      console.error('Erro:', err)
-    } finally {
-      setLoading(false)
+  const [showUpdateIndicator, setShowUpdateIndicator] = useState(false)
+  
+  // Usar o novo hook para dados automáticos
+  const {
+    relatorioFinanceiro,
+    relatorioInadimplencia, 
+    relatorioAtividades,
+    isLoading: loading,
+    error,
+    hasChanges,
+    lastUpdate,
+    refresh,
+    clearChanges,
+    isAutoRefreshEnabled
+  } = useReportsData({
+    autoRefreshInterval: 30000, // 30 segundos
+    enableAutoRefresh: true,
+    onDataChange: () => {
+      setShowUpdateIndicator(true)
+      toast.success('📊 Relatórios atualizados automaticamente!')
+      
+      // Remover indicador após 3 segundos
+      setTimeout(() => setShowUpdateIndicator(false), 3000)
     }
-  }
+  })
 
+  // Escutar eventos globais de mudança de dados
   useEffect(() => {
-    carregarDados()
-  }, [])
+    const handleDataChange = (event: CustomEvent) => {
+      console.log('🔄 Evento de mudança detectado:', event.detail)
+      // Aguardar um pouco antes de atualizar para permitir que a mudança seja salva
+      setTimeout(() => {
+        refresh()
+      }, 1000)
+    }
+
+    window.addEventListener('reportsDataChange', handleDataChange as EventListener)
+    
+    return () => {
+      window.removeEventListener('reportsDataChange', handleDataChange as EventListener)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Executar apenas na montagem, refresh é estável
+
+  // Limpar indicador de mudanças quando o usuário interage
+  useEffect(() => {
+    if (hasChanges) {
+      clearChanges()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]) // Removido hasChanges e clearChanges das dependências para evitar loop
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      <div className="flex flex-col items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mb-4"></div>
+        <p className="text-muted-foreground">Carregando relatórios...</p>
+        {isAutoRefreshEnabled && (
+          <div className="flex items-center mt-2 text-sm text-green-600">
+            <Wifi className="h-4 w-4 mr-1" />
+            Atualização automática ativa
+          </div>
+        )}
       </div>
     )
   }
@@ -177,10 +196,18 @@ export default function Reports() {
         <AlertTriangle className="h-16 w-16 text-red-500 mx-auto mb-4" />
         <h3 className="text-lg font-semibold mb-2">Erro ao carregar relatórios</h3>
         <p className="text-muted-foreground mb-4">{error}</p>
-        <Button onClick={carregarDados}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Tentar novamente
-        </Button>
+        <div className="flex items-center justify-center gap-2">
+          <Button onClick={() => refresh()} variant="outline">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Tentar novamente
+          </Button>
+          {!isAutoRefreshEnabled && (
+            <div className="flex items-center text-sm text-orange-600">
+              <WifiOff className="h-4 w-4 mr-1" />
+              Atualização automática desabilitada
+            </div>
+          )}
+        </div>
       </div>
     )
   }
@@ -189,15 +216,44 @@ export default function Reports() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Relatórios</h2>
-          <p className="text-muted-foreground">
-            Análise completa do seu sistema de cobrança
-          </p>
+          <div className="flex items-center gap-3">
+            <h2 className="text-3xl font-bold tracking-tight">Relatórios</h2>
+            {showUpdateIndicator && (
+              <Badge variant="outline" className="animate-pulse bg-green-50 text-green-700 border-green-300">
+                <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+                Atualizado
+              </Badge>
+            )}
+            {hasChanges && (
+              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
+                Dados alterados
+              </Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-4 mt-1">
+            <p className="text-muted-foreground">
+              Análise completa do seu sistema de cobrança
+            </p>
+            {lastUpdate && (
+              <div className="flex items-center text-xs text-muted-foreground">
+                <Clock className="h-3 w-3 mr-1" />
+                Última atualização: {lastUpdate.toLocaleString('pt-BR')}
+              </div>
+            )}
+          </div>
         </div>
-        <Button onClick={carregarDados} variant="outline">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Atualizar
-        </Button>
+        <div className="flex items-center gap-2">
+          {isAutoRefreshEnabled && (
+            <div className="flex items-center text-sm text-green-600 mr-3">
+              <Wifi className="h-4 w-4 mr-1 animate-pulse" />
+              Auto-sync
+            </div>
+          )}
+          <Button onClick={() => refresh()} variant="outline" disabled={loading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            {loading ? 'Atualizando...' : 'Atualizar'}
+          </Button>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
@@ -323,7 +379,7 @@ export default function Reports() {
                           dataKey="value"
                           label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(1)}%`}
                         >
-                          {relatorioFinanceiro.dadosPizza.map((entry, index) => (
+                          {relatorioFinanceiro.dadosPizza.map((entry: any, index: number) => (
                             <Cell key={`cell-${index}`} fill={entry.fill} />
                           ))}
                         </Pie>
@@ -469,7 +525,7 @@ export default function Reports() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {relatorioInadimplencia.listaInadimplentes.slice(0, 10).map((item) => (
+                      {relatorioInadimplencia.listaInadimplentes.slice(0, 10).map((item: any) => (
                         <TableRow key={item.id}>
                           <TableCell>
                             <div>
@@ -647,7 +703,7 @@ export default function Reports() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {relatorioAtividades.performanceSemanal.map((semana, index) => (
+                      {relatorioAtividades.performanceSemanal.map((semana: any, index: number) => (
                         <TableRow key={index}>
                           <TableCell>
                             <div>

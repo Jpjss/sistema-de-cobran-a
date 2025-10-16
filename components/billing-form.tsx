@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useNotifyDataChange } from "@/contexts/DataSyncContext"
 import type { Billing, Customer } from "@/app/page"
 
 interface BillingFormProps {
@@ -18,6 +19,8 @@ interface BillingFormProps {
 }
 
 export function BillingForm({ customers, billing, onSubmit, onCancel }: BillingFormProps) {
+  const { onBillingCreated, onBillingUpdated } = useNotifyDataChange()
+  
   const [formData, setFormData] = useState({
     customerName: billing?.customerName || "",
     customerEmail: billing?.customerEmail || "",
@@ -40,14 +43,24 @@ export function BillingForm({ customers, billing, onSubmit, onCancel }: BillingF
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit({
+    
+    const billingData = {
       customerName: formData.customerName,
       customerEmail: formData.customerEmail,
       description: formData.description,
       amount: Number.parseFloat(formData.amount),
       dueDate: formData.dueDate,
       status: formData.status,
-    })
+    }
+    
+    // Notificar sobre a criação/atualização
+    if (billing) {
+      onBillingUpdated(billing.id)
+    } else {
+      onBillingCreated()
+    }
+    
+    onSubmit(billingData)
   }
 
   return (

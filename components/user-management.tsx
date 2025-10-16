@@ -14,9 +14,11 @@ import { Plus, MoreHorizontal, Edit, Trash2, Users, Shield, UserCheck } from "lu
 import { authService, type User } from "@/lib/auth"
 import { useAuth } from "@/hooks/use-auth"
 import { auditService } from "@/lib/audit"
+import { useNotifyDataChange } from "@/contexts/DataSyncContext"
 
 export function UserManagement() {
   const { user: currentUser } = useAuth()
+  const { onUserCreated, onUserUpdated, onUserDeleted } = useNotifyDataChange()
   const [users, setUsers] = useState<Omit<User, "password">[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingUser, setEditingUser] = useState<Omit<User, "password"> | null>(null)
@@ -64,6 +66,7 @@ export function UserManagement() {
           resourceId: editingUser.id,
           details: `Atualizou dados do usuário ${formData.name}`,
         })
+        onUserUpdated(editingUser.id) // Notifica que o usuário foi atualizado
         loadUsers()
         resetForm()
       }
@@ -83,6 +86,7 @@ export function UserManagement() {
           resourceId: newUser.id,
           details: `Criou novo usuário ${newUser.name} com perfil ${newUser.role}`,
         })
+        onUserCreated(newUser.id) // Notifica que um novo usuário foi criado
         loadUsers()
         resetForm()
       }
@@ -117,6 +121,7 @@ export function UserManagement() {
           resourceId: user.id,
           details: `Excluiu usuário ${user.name}`,
         })
+        onUserDeleted(user.id) // Notifica que o usuário foi deletado
         loadUsers()
       }
     }

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Plus, MoreHorizontal, Search, Edit, Trash2 } from "lucide-react"
+import { useNotifyDataChange } from "@/contexts/DataSyncContext"
 import type { Customer } from "@/app/page"
 
 interface CustomerListProps {
@@ -19,6 +20,8 @@ interface CustomerListProps {
 }
 
 export function CustomerList({ customers, onAdd, onUpdate, onDelete }: CustomerListProps) {
+  const { onCustomerCreated, onCustomerUpdated, onCustomerDeleted } = useNotifyDataChange()
+  
   const [showForm, setShowForm] = useState(false)
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
@@ -41,13 +44,17 @@ export function CustomerList({ customers, onAdd, onUpdate, onDelete }: CustomerL
     setEditingCustomer(null)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
     if (editingCustomer) {
-      onUpdate(editingCustomer.id, formData)
+      await onUpdate(editingCustomer.id, formData)
+      onCustomerUpdated() // Notifica que o cliente foi atualizado
     } else {
-      onAdd(formData)
+      await onAdd(formData)
+      onCustomerCreated() // Notifica que um novo cliente foi criado
     }
+    
     resetForm()
   }
 
@@ -172,7 +179,10 @@ export function CustomerList({ customers, onAdd, onUpdate, onDelete }: CustomerL
                       <Edit className="h-4 w-4 mr-2" />
                       Editar
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onDelete(customer.id)} className="text-red-600">
+                    <DropdownMenuItem onClick={() => {
+                      onDelete(customer.id)
+                      onCustomerDeleted() // Notifica que o cliente foi deletado
+                    }} className="text-red-600">
                       <Trash2 className="h-4 w-4 mr-2" />
                       Excluir
                     </DropdownMenuItem>

@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { MoreHorizontal, Search, Check, X, Mail, CreditCard, QrCode, ExternalLink } from "lucide-react"
+import { useNotifyDataChange } from "@/contexts/DataSyncContext"
 import type { Billing } from "@/app/page"
 
 interface BillingListProps {
@@ -18,6 +19,8 @@ interface BillingListProps {
 }
 
 export function BillingList({ billings, onUpdate, onDelete, onSendEmail }: BillingListProps) {
+  const { onBillingPaid, onBillingDeleted, onBillingUpdated } = useNotifyDataChange()
+  
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
 
@@ -132,18 +135,27 @@ export function BillingList({ billings, onUpdate, onDelete, onSendEmail }: Billi
                         </DropdownMenuItem>
                       )}
                       {billing.status === "pending" && (
-                        <DropdownMenuItem onClick={() => onUpdate(billing.id, { status: "paid" })}>
+                        <DropdownMenuItem onClick={() => {
+                          onBillingPaid(billing.id)
+                          onUpdate(billing.id, { status: "paid" })
+                        }}>
                           <Check className="h-4 w-4 mr-2" />
                           Marcar como Pago
                         </DropdownMenuItem>
                       )}
                       {billing.status === "paid" && (
-                        <DropdownMenuItem onClick={() => onUpdate(billing.id, { status: "pending" })}>
+                        <DropdownMenuItem onClick={() => {
+                          onBillingUpdated(billing.id)
+                          onUpdate(billing.id, { status: "pending" })
+                        }}>
                           <X className="h-4 w-4 mr-2" />
                           Marcar como Pendente
                         </DropdownMenuItem>
                       )}
-                      <DropdownMenuItem onClick={() => onDelete(billing.id)} className="text-red-600">
+                      <DropdownMenuItem onClick={() => {
+                        onBillingDeleted(billing.id)
+                        onDelete(billing.id)
+                      }} className="text-red-600">
                         <X className="h-4 w-4 mr-2" />
                         Excluir
                       </DropdownMenuItem>

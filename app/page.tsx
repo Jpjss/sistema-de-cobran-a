@@ -18,11 +18,23 @@ import { AuditLogComponent } from "@/components/audit-log"
 import { LoginForm } from "@/components/login-form"
 import { UserProfile } from "@/components/user-profile"
 import { ProtectedRoute } from "@/components/protected-route"
-import Reports from "@/components/reports"
 import { PaymentMethodsConfig } from "@/components/payment-methods-config"
+import { DataSyncProvider } from "@/contexts/DataSyncContext"
 import { useAuth } from "@/hooks/use-auth"
 import { useBillings } from "@/hooks/use-billings"
 import { auditService } from "@/lib/audit"
+import dynamic from "next/dynamic"
+
+// Importação dinâmica do componente Reports para evitar problemas de SSR
+const Reports = dynamic(() => import("@/components/reports-wrapper"), { 
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center min-h-[400px]">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+      <p className="mt-2 text-muted-foreground">Carregando relatórios...</p>
+    </div>
+  </div>
+})
 
 export interface Billing {
   id: string
@@ -215,7 +227,8 @@ export default function BillingSystem() {
   }
 
   return (
-    <SidebarProvider>
+    <DataSyncProvider>
+      <SidebarProvider>
       <div className="min-h-screen bg-background flex">
         <Sidebar className="border-r">
           <SidebarContent>
@@ -422,5 +435,6 @@ export default function BillingSystem() {
         </div>
       </div>
     </SidebarProvider>
+    </DataSyncProvider>
   )
 }
