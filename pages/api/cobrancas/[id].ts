@@ -42,19 +42,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const cliente = await clientesCollection.findOne({ _id: cobranca.cliente });
 
       const result = {
-        id: cobranca._id.toString(),
-        customerName: cliente?.nome || 'Cliente não encontrado',
-        customerEmail: cliente?.email || '',
-        customerDocument: cliente?.documento || '',
+        _id: cobranca._id.toString(),
+        customerId: cobranca.cliente?.toString() || '',
         amount: cobranca.valor,
         description: cobranca.descricao,
         dueDate: cobranca.vencimento,
         status: cobranca.status,
         createdAt: cobranca.dataCriacao,
-        dataPagamento: cobranca.dataPagamento
+        paymentMethod: cobranca.metodoPagamento || null,
+        origem: cobranca.origem || null,
+        referenciaId: cobranca.referenciaId?.toString() || null,
+        customer: cliente ? {
+          name: cliente.nome || '',
+          email: cliente.email || '',
+          phone: cliente.telefone || cliente.whatsapp || ''
+        } : null
       };
 
-      console.log('✅ Cobrança encontrada:', result.customerName);
+      console.log('✅ Cobrança encontrada:', result.customer?.name || 'Sem cliente');
       
       await client.close();
       return res.status(200).json(result);

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, DollarSign, Users, FileText, TrendingUp, Bell, Settings, Shield, Menu, CreditCard } from "lucide-react"
+import { Plus, DollarSign, Users, FileText, TrendingUp, Bell, Settings, Shield, Menu, CreditCard, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -265,6 +265,15 @@ export default function BillingSystem() {
                     <SidebarMenuButton onClick={() => setActiveTab("reports")} isActive={activeTab === "reports"}>
                       <DollarSign className="h-4 w-4" />
                       <span>Relatórios</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton 
+                      onClick={() => window.location.href = "/atendimentos"} 
+                      isActive={false}
+                    >
+                      <Clock className="h-4 w-4" />
+                      <span>⏱️ Atendimentos</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>

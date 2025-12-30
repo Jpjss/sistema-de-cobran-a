@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
-import { MoreHorizontal, Search, Check, X, Mail, CreditCard, QrCode, ExternalLink } from "lucide-react"
+import { MoreHorizontal, Search, Check, X, Mail, CreditCard, QrCode, ExternalLink, Clock } from "lucide-react"
 import { useNotifyDataChange } from "@/contexts/DataSyncContext"
 import type { Billing } from "@/app/page"
 
@@ -23,13 +23,17 @@ export function BillingList({ billings, onUpdate, onDelete, onSendEmail }: Billi
   
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [origemFilter, setOrigemFilter] = useState<string>("all")
 
   const filteredBillings = billings.filter((billing) => {
     const matchesSearch =
       billing.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       billing.description.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === "all" || billing.status === statusFilter
-    return matchesSearch && matchesStatus
+    const matchesOrigem = origemFilter === "all" || 
+      (origemFilter === "atendimento" && (billing as any).origem === "ATENDIMENTO_TEMPO") ||
+      (origemFilter === "manual" && !(billing as any).origem)
+    return matchesSearch && matchesStatus && matchesOrigem
   })
 
   const getStatusColor = (status: string) => {
@@ -75,8 +79,8 @@ export function BillingList({ billings, onUpdate, onDelete, onSendEmail }: Billi
   return (
     <div className="space-y-4">
       {/* Filtros */}
-      <div className="flex gap-4 items-center">
-        <div className="relative flex-1">
+      <div className="flex gap-4 items-center flex-wrap">
+        <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
             placeholder="Buscar por cliente ou descrição..."
@@ -88,12 +92,21 @@ export function BillingList({ billings, onUpdate, onDelete, onSendEmail }: Billi
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-2 border rounded-md"
+          className="px-3 py-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
         >
           <option value="all">Todos os Status</option>
           <option value="pending">Pendente</option>
           <option value="paid">Pago</option>
           <option value="overdue">Atrasado</option>
+        </select>
+        <select
+          value={origemFilter}
+          onChange={(e) => setOrigemFilter(e.target.value)}
+          className="px-3 py-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
+        >
+          <option value="all">Todas as Origens</option>
+          <option value="atendimento">⏱️ Atendimento por Tempo</option>
+          <option value="manual">📝 Manual</option>
         </select>
       </div>
 
@@ -108,6 +121,11 @@ export function BillingList({ billings, onUpdate, onDelete, onSendEmail }: Billi
                   <CardDescription className="dark:text-gray-400">{billing.customerEmail}</CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
+                  {(billing as any).origem === "ATENDIMENTO_TEMPO" && (
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800">
+                      ⏱️ Atendimento
+                    </Badge>
+                  )}
                   <Badge variant={getStatusColor(billing.status)}>{getStatusText(billing.status)}</Badge>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -167,6 +185,12 @@ export function BillingList({ billings, onUpdate, onDelete, onSendEmail }: Billi
             <CardContent>
               <div className="space-y-2">
                 <p className="text-sm text-gray-600 dark:text-gray-400">{billing.description}</p>
+                {(billing as any).origem === "ATENDIMENTO_TEMPO" && (billing as any).referenciaId && (
+                  <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400">
+                    <Clock className="h-3 w-3" />
+                    <span>Gerada automaticamente pelo atendimento</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center">
                   <div className="space-y-1">
                     <p className="text-2xl font-bold">

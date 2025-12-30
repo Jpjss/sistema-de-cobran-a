@@ -8,13 +8,14 @@ datasource db {
 }
 
 model Customer {
-  id        String    @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  email     String    @unique
-  phone     String?
-  billings  Billing[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id               String             @id @default(auto()) @map("_id") @db.ObjectId
+  name             String
+  email            String             @unique
+  phone            String?
+  billings         Billing[]
+  atendimentos     AtendimentoTempo[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
 
   @@map("customers")
 }
@@ -35,6 +36,49 @@ model Billing {
   lastReminderDate  DateTime?
   overdueSent       Boolean   @default(false)
   lastOverdueDate   DateTime?
+  
+  // Campos para rastreabilidade de origem
+  origem         String?  // ATENDIMENTO_TEMPO, MANUAL, etc
+  referenciaId   String?  @db.ObjectId // ID do atendimento que gerou a cobrança
 
   @@map("billings")
+}
+
+model User {
+  id              String            @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  email           String            @unique
+  password        String
+  role            String            @default("analista") // admin, analista
+  valorHora       Float             @default(100.0) // valor por hora do analista
+  ativo           Boolean           @default(true)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  atendimentos    AtendimentoTempo[]
+
+  @@map("users")
+}
+
+model AtendimentoTempo {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  customer      Customer  @relation(fields: [customerId], references: [id])
+  customerId    String    @db.ObjectId
+  analista      User      @relation(fields: [analistaId], references: [id])
+  analistaId    String    @db.ObjectId
+  
+  inicio        DateTime
+  fim           DateTime?
+  tempoMinutos  Int?      // calculado ao finalizar
+  valorHora     Float     // valor da hora no momento do atendimento
+  valorTotal    Float?    // calculado ao finalizar
+  
+  status        String    @default("em_andamento") // em_andamento, pausado, finalizado, cancelado
+  descricao     String?   // descrição opcional do atendimento
+  
+  cobrancaId    String?   @db.ObjectId // FK para a cobrança gerada
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("atendimentos_tempo")
 }
